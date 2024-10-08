@@ -15,9 +15,12 @@ class Solver(Protocol):
 
 
 class RandomSolver(Solver):
-    def __init__(self, problem: TSP):
+    def __init__(self, problem: TSP, seed=None):
         self.problem = problem
+        self.seed = seed
 
     def solve(self):
+        if self.seed is not None:
+            np.random.seed(self.seed)
         path = np.random.choice(len(self.problem), int(np.fix(len(self.problem) / 2)))
         return path

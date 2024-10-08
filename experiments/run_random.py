@@ -1,8 +1,16 @@
+import argparse
+from pathlib import Path
+
 from tsp import TSP
 from tsp.solvers import RandomSolver
 
 if __name__ == "__main__":
-    instance = TSP.from_csv("data/TSPA.csv")
-    solver = RandomSolver(instance)
+    parser = argparse.ArgumentParser(description="Solve TSP")
+    parser.add_argument("input_file", type=Path)
+    parser.add_argument("--seed", type=int)
+    args = parser.parse_args()
+
+    instance = TSP.from_csv(args.input_file)
+    solver = RandomSolver(instance, args.seed)
     solution = solver.solve()
     instance.visualize(solution)
