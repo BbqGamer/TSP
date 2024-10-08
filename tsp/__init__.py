@@ -10,6 +10,7 @@ class TSP:
         diffs = points[:, np.newaxis, :] - points[np.newaxis, :, :]
         self.D = np.sqrt(np.sum(diffs**2, axis=-1))
         self.D = np.floor(self.D + 0.5)  # mathematical rounding
+        self.D += np.diag(np.repeat(np.inf, len(points)))
 
         self.c = weights
 
@@ -34,6 +35,7 @@ class TSP:
         title = "TSP points to visit with costs"
 
         if solution is not None:
+            score = self.score(solution)
             solution = np.concatenate((solution, [solution[0]]))
             plt.plot(
                 x[solution],
@@ -43,7 +45,17 @@ class TSP:
                 linewidth=1,
                 label="Path",
             )  # Highlight the path
-            title += f" (score: {self.score(solution)})"
+            title += f" (score: {score})"
+
+            for i, node in enumerate(solution):
+                plt.text(
+                    x[node] + 0.6,
+                    y[node] + 0.2,
+                    f"{node}",
+                    fontsize=10,
+                    color="black",
+                    fontweight="bold" if i == 0 else "normal",
+                )
 
         plt.title(title)
         plt.show()
