@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tsp"
+version = "0.0.1-dev"
+description = "Solving TSP"
+license = "MIT"
+readme = "README.md"
+dependencies = ["matplotlib", "numpy"]
+
+[project.packages]
+packages = [
+    { include = "lib" },
+]
