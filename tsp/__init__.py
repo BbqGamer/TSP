@@ -11,6 +11,7 @@ class TSP:
         # calculate euclidian distance matrix
         diffs = points[:, np.newaxis, :] - points[np.newaxis, :, :]
         self.D = np.sqrt(np.sum(diffs**2, axis=-1))
+        self.D = np.floor(self.D + 0.5)  # mathematical rounding
 
         self.c = weights
 
