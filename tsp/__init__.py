@@ -20,7 +20,7 @@ class TSP:
         data = np.genfromtxt(filename, delimiter=";")
         return cls(data[:, :2], data[:, 2])
 
-    def visualize(self):
+    def visualize(self, solution=None):
         x = self._points[:, 0]
         y = self._points[:, 1]
         scatter = plt.scatter(
@@ -30,9 +30,24 @@ class TSP:
             cmap="YlOrRd",
         )
         plt.colorbar(scatter, label="Cost")
-        plt.title("TSP points to visit with costs")
         plt.xlabel("X-axis")
         plt.ylabel("Y-axis")
+
+        title = "TSP points to visit with costs"
+
+        if solution is not None:
+            solution = np.concatenate((solution, [solution[0]]))
+            plt.plot(
+                x[solution],
+                y[solution],
+                color="black",
+                linestyle="-",
+                linewidth=1,
+                label="Path",
+            )  # Highlight the path
+            title += f" (score: {self.score(solution)})"
+
+        plt.title(title)
         plt.show()
 
     def __len__(self) -> int:
