@@ -19,4 +19,17 @@ class TSP:
         data = np.genfromtxt(filename, delimiter=";")
         return cls(data[:, :2], data[:, 2])
 
-
+    def visualize(self):
+        x = self._points[:, 0]
+        y = self._points[:, 1]
+        scatter = plt.scatter(
+            x,
+            y,
+            c=self.c,
+            cmap="YlOrRd",
+        )
+        plt.colorbar(scatter, label="Cost")
+        plt.title("TSP points to visit with costs")
+        plt.xlabel("X-axis")
+        plt.ylabel("Y-axis")
+        plt.show()
