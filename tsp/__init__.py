@@ -51,6 +51,11 @@ class TSP:
     def __len__(self) -> int:
         return len(self._points)
 
+    @property
+    def solution_size(self) -> int:
+        """It is required for us to only use 50% of nodes in solution"""
+        return int(np.fix(len(self) / 2))
+
     def score(self, solution: np.ndarray) -> float:
         """Return's the score of the solution (distance + weights)"""
         # weights

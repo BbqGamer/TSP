@@ -22,5 +22,28 @@ class RandomSolver(Solver):
     def solve(self):
         if self.seed is not None:
             np.random.seed(self.seed)
-        path = np.random.choice(len(self.problem), int(np.fix(len(self.problem) / 2)))
+        path = np.random.choice(len(self.problem), self.problem.solution_size)
         return path
+
+
+class NNHead(Solver):
+    def __init__(self, problem: TSP, starting_node: int):
+        self.problem = problem
+        self.starting_node = starting_node
+
+    def solve(self):
+        current = self.starting_node
+        solution = [current]
+        visited = np.zeros(len(self.problem), dtype=bool)
+        visited[self.starting_node] = True
+
+        for _ in range(1, self.problem.solution_size):
+            unvisited_distances = self.problem.D[current][~visited]
+            nearest_neighbor_index = np.argmin(unvisited_distances)
+            nearest_neighbor = np.where(~visited)[0][nearest_neighbor_index]
+
+            solution.append(nearest_neighbor)
+            visited[nearest_neighbor] = True
+            current = nearest_neighbor
+
+        return np.array(solution)
