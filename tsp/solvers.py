@@ -57,8 +57,6 @@ class NNWhole(Solver):
     def solve(self):
         current = self.starting_node
         solution = [current]
-        visited = np.zeros(len(self.problem), dtype=bool)
-        visited[self.starting_node] = True
 
         D = self.problem.D.copy()
         # Find nearest neighbor considering all positions from current solution
@@ -74,11 +72,6 @@ class NNWhole(Solver):
                     best_posi = i
                     best_dist = dist
                     best_nn = int(nn)
-            # decide whether to add on the left of the node or on the right
-            right = solution[best_posi - 1]
-            left = solution[(best_posi + 1) % len(solution)]
-            if D[left][best_nn] < D[right][best_nn]:
-                best_posi = best_posi + 1
             solution.insert(best_posi, best_nn)
             D[:, best_nn] = np.inf
 
