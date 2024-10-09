@@ -76,3 +76,41 @@ class NNWhole(Solver):
             D[:, best_nn] = np.inf
 
         return np.array(solution)
+
+
+class GreedyCycle(Solver):
+    def __init__(self, problem: TSP, starting_node: int):
+        self.problem = problem
+        self.starting_node = starting_node
+
+    def solve(self) -> np.ndarray:
+        current = int(np.argmin(self.problem.D[self.starting_node]))
+        solution = [self.starting_node, current]
+        not_visited = set(range(len(self.problem)))
+        not_visited.remove(self.starting_node)
+        not_visited.remove(current)
+
+        D = self.problem.D.copy()
+        # Find nearest neighbor considering all positions from current solution
+        for _ in range(1, self.problem.solution_size):
+            best_i = -1
+            best_j = -1
+            best_delta = np.inf
+            for i in range(len(solution) - 1):
+                # find new candidate
+                for j in not_visited:
+                    delta = (
+                        D[solution[i], j]
+                        + D[j, solution[i + 1]]
+                        - D[solution[i], solution[i + 1]]
+                    )
+                    if delta < best_delta:
+                        best_i = i
+                        best_j = j
+                        best_delta = delta
+
+            # Add found best candidate
+            solution.insert(best_i + 1, best_j)
+            not_visited.remove(best_j)
+
+        return np.array(solution)
