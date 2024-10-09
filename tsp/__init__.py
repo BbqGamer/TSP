@@ -5,14 +5,14 @@ import numpy as np
 class TSP:
     def __init__(self, points, weights):
         self._points = points
+        self._weights = weights
 
         # calculate euclidian distance matrix
         diffs = points[:, np.newaxis, :] - points[np.newaxis, :, :]
         self.D = np.sqrt(np.sum(diffs**2, axis=-1))
         self.D = np.floor(self.D + 0.5)  # mathematical rounding
+        self.D += weights
         self.D += np.diag(np.repeat(np.inf, len(points)))
-
-        self.c = weights
 
     @classmethod
     def from_csv(cls, filename: str):
@@ -25,7 +25,7 @@ class TSP:
         scatter = plt.scatter(
             x,
             y,
-            c=self.c,
+            c=self._weights,
             cmap="YlOrRd",
         )
         plt.colorbar(scatter, label="Cost")
@@ -47,15 +47,8 @@ class TSP:
             )  # Highlight the path
             title += f" (score: {score})"
 
-            for i, node in enumerate(solution):
-                plt.text(
-                    x[node] + 0.6,
-                    y[node] + 0.2,
-                    f"{node}",
-                    fontsize=10,
-                    color="black",
-                    fontweight="bold" if i == 0 else "normal",
-                )
+        for node in range(len(self._points)):
+            plt.text(x[node] + 0.6, y[node], f"{node}", fontsize=10, color="black")
 
         plt.title(title)
         plt.show()
@@ -69,13 +62,9 @@ class TSP:
         return int(np.fix(len(self) / 2))
 
     def score(self, solution: np.ndarray) -> float:
-        """Return's the score of the solution (distance + weights)"""
-        # weights
-        score = np.sum(self.c[solution])
-
-        # distance
+        """Return's the score of the solution"""
         closed_path = np.concatenate((solution, [solution[0]]))
         index_pairs = np.vstack((closed_path[:-1], closed_path[1:])).T
-        score += np.sum(self.D[index_pairs[:, 0], index_pairs[:, 1]])
+        score = np.sum(self.D[index_pairs[:, 0], index_pairs[:, 1]])
 
         return score
