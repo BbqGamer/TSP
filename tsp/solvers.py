@@ -61,28 +61,25 @@ class NNWhole(Solver):
         visited[self.starting_node] = True
 
         D = self.problem.D.copy()
-        D[:, current] = np.inf
+        # Find nearest neighbor considering all positions from current solution
+        D[:, current] = np.inf  # prevent finding it as best new node
         for _ in range(1, self.problem.solution_size):
-            besti = 0
-            best_nn = np.argmin(D[solution[besti]])
-            best_dist = D[solution[besti], best_nn]
-            for i, x in enumerate(solution[1:]):
-                nn = np.argmin(D[x])
-                dist = D[x][nn]
+            best_posi = -1
+            best_dist = np.inf
+            best_nn = -1
+            for i, pos in enumerate(solution):
+                nn = np.argmin(D[pos])
+                dist = D[pos][nn]
                 if dist < best_dist:
-                    besti = i
-                    best_nn = nn
+                    best_posi = i
                     best_dist = dist
-
-            if besti == 0:
-                solution.insert(0, best_nn)
-            elif besti == len(solution) - 1:
-                solution.append(best_nn)
-            else:
-                if D[solution[besti - 1], best_nn] < D[solution[besti + 1], best_nn]:
-                    solution.insert(besti, best_nn)
-                else:
-                    solution.insert(besti + 1, best_nn)
-
+                    best_nn = int(nn)
+            # decide whether to add on the left of the node or on the right
+            right = solution[best_posi - 1]
+            left = solution[(best_posi + 1) % len(solution)]
+            if D[left][best_nn] < D[right][best_nn]:
+                best_posi = best_posi + 1
+            solution.insert(best_posi, best_nn)
             D[:, best_nn] = np.inf
+
         return np.array(solution)
