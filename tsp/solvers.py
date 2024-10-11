@@ -23,7 +23,9 @@ class RandomSolver(Solver):
     def solve(self):
         if self.seed is not None:
             np.random.seed(self.seed)
-        path = np.random.choice(len(self.problem), self.problem.solution_size)
+        path = np.random.choice(
+            len(self.problem), self.problem.solution_size, replace=False
+        )
         return path
 
 
