@@ -1,6 +1,7 @@
 from typing import Protocol
 
 import numpy as np
+from numba import njit
 
 from tsp import TSP
 
@@ -77,6 +78,30 @@ class NNWhole(Solver):
 
         return np.array(solution)
 
+    @staticmethod
+    @njit()
+    def _solve(D, starting, solution_size):
+        current = starting
+        solution = [current]
+
+        # Find nearest neighbor considering all positions from current solution
+        D[:, current] = np.inf  # prevent finding it as best new node
+        for _ in range(1, solution_size):
+            best_posi = -1
+            best_dist = np.inf
+            best_nn = -1
+            for i, pos in enumerate(solution):
+                nn = np.argmin(D[pos])
+                dist = D[pos][nn]
+                if dist < best_dist:
+                    best_posi = i
+                    best_dist = dist
+                    best_nn = int(nn)
+            solution.insert(best_posi, best_nn)
+            D[:, best_nn] = np.inf
+
+        return np.array(solution)
+
 
 class GreedyCycle(Solver):
     def __init__(self, problem: TSP, starting_node: int):
@@ -84,15 +109,24 @@ class GreedyCycle(Solver):
         self.starting_node = starting_node
 
     def solve(self) -> np.ndarray:
-        current = int(np.argmin(self.problem.D[self.starting_node]))
-        solution = [self.starting_node, current]
-        not_visited = set(range(len(self.problem)))
-        not_visited.remove(self.starting_node)
+        return GreedyCycle._solve(
+            self.problem.D,
+            self.starting_node,
+            len(self.problem),
+            self.problem.solution_size,
+        )
+
+    @staticmethod
+    @njit()
+    def _solve(D, starting, problem_size, solution_size):
+        current = int(np.argmin(D[starting]))
+        solution = [starting, current]
+        not_visited = set(range(problem_size))
+        not_visited.remove(starting)
         not_visited.remove(current)
 
-        D = self.problem.D.copy()
         # Find nearest neighbor considering all positions from current solution
-        for _ in range(1, self.problem.solution_size):
+        for _ in range(1, solution_size):
             best_i = -1
             best_j = -1
             best_delta = np.inf
