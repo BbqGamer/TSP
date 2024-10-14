@@ -59,7 +59,7 @@ class NNWhole(Solver):
 
     def solve(self):
         return NNWhole._solve(
-            self.problem.D, self.starting_node, self.problem.solution_size
+            self.problem.D.copy(), self.starting_node, self.problem.solution_size
         )
 
     @staticmethod
