@@ -110,7 +110,7 @@ class GreedyCycle(Solver):
         not_visited.remove(current)
 
         # Find nearest neighbor considering all positions from current solution
-        for _ in range(1, solution_size):
+        for _ in range(2, solution_size):
             best_i = -1
             best_j = -1
             best_delta = np.inf
