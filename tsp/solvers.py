@@ -58,27 +58,9 @@ class NNWhole(Solver):
         self.starting_node = starting_node
 
     def solve(self):
-        current = self.starting_node
-        solution = [current]
-
-        D = self.problem.D.copy()
-        # Find nearest neighbor considering all positions from current solution
-        D[:, current] = np.inf  # prevent finding it as best new node
-        for _ in range(1, self.problem.solution_size):
-            best_posi = -1
-            best_dist = np.inf
-            best_nn = -1
-            for i, pos in enumerate(solution):
-                nn = np.argmin(D[pos])
-                dist = D[pos][nn]
-                if dist < best_dist:
-                    best_posi = i
-                    best_dist = dist
-                    best_nn = int(nn)
-            solution.insert(best_posi, best_nn)
-            D[:, best_nn] = np.inf
-
-        return np.array(solution)
+        return NNWhole._solve(
+            self.problem.D, self.starting_node, self.problem.solution_size
+        )
 
     @staticmethod
     @njit()
