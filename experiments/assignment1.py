@@ -37,6 +37,6 @@ if __name__ == "__main__":
 
     with open("results/assignment1.csv", "w") as f:
         writer = csv.writer(f, delimiter=";")
-        writer.writerow(["filename","solver","score","starting_node","solution"])
+        writer.writerow(["filename", "solver", "score", "starting_node", "solution"])
         for row in res:
             writer.writerow(row)
