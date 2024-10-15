@@ -29,27 +29,36 @@ class RandomSolver(Solver):
         return path
 
 
+@njit()
+def pairwise_circular(lst):
+    for i in range(len(lst) - 1):
+        yield lst[i], lst[i + 1]
+    yield lst[-1], lst[0]
+
+
 class NNHead(Solver):
     def __init__(self, problem: TSP, starting_node: int):
         self.problem = problem
         self.starting_node = starting_node
 
     def solve(self):
-        current = self.starting_node
-        solution = [current]
-        visited = np.zeros(len(self.problem), dtype=bool)
-        visited[self.starting_node] = True
+        return NNHead._solve(
+            self.problem.D, self.starting_node, self.problem.solution_size
+        )
 
-        for _ in range(self.problem.solution_size - 1):
-            unvisited_distances = self.problem.D[current][~visited]
-            nearest_neighbor_index = np.argmin(unvisited_distances)
-            nearest_neighbor = np.where(~visited)[0][nearest_neighbor_index]
-
-            solution.append(nearest_neighbor)
-            visited[nearest_neighbor] = True
-            current = nearest_neighbor
-
-        return np.array(solution)
+    @staticmethod
+    @njit()
+    def _solve(D, starting, sol_size):
+        D = D.copy()
+        current = starting
+        S = [current]
+        D[:, current] = np.inf
+        for _ in range(sol_size - 1):
+            nn = np.argmin(D[current])
+            S.append(nn)
+            current = nn
+            D[:, current] = np.inf
+        return np.array(S)
 
 
 class NNWhole(Solver):
@@ -63,33 +72,21 @@ class NNWhole(Solver):
         )
 
     @staticmethod
+    @njit()
     def _solve(D, starting, solution_size):
-        current = int(np.argmin(D[starting]))
-        solution = [starting, current]
+        DC = D.copy()
+        solution = [starting]
+        DC[:, starting] = np.inf
 
-        visited = np.zeros(len(D), dtype=bool)
-        visited[current] = True
-        visited[solution] = True
-
-        for _ in range(solution_size - 2):
-            best_posi = -1
-            best_delta = np.inf
-            best_nn = -1
-            for i, pos in enumerate(solution):
-                # find closest neighbor to pos from solution
-                unvisited_distances = D[pos][~visited]
-                nearest_neighbor_index = np.argmin(unvisited_distances)
-                nn = int(np.where(~visited)[0][nearest_neighbor_index])
-
-                nextpos = solution[(i + 1) % len(solution)]
-                delta = D[pos][nn] + D[nn][nextpos] - D[pos][nextpos]
+        for _ in range(solution_size - 1):
+            best_i, best_nn, best_delta = -1, -1, np.inf
+            for i, (first, second) in enumerate(pairwise_circular(solution)):
+                nn = np.argmin(DC[first])
+                delta = D[first][nn] + D[nn][second] - D[first][second]
                 if delta < best_delta:
-                    best_posi = i
-                    best_delta = delta
-                    best_nn = nn
-            solution.insert(best_posi + 1, best_nn)
-            visited[best_nn] = True
-
+                    best_i, best_delta, best_nn = i, delta, nn
+            solution.insert(best_i + 1, best_nn)
+            DC[:, best_nn] = np.inf
         return np.array(solution)
 
 
@@ -103,36 +100,22 @@ class GreedyCycle(Solver):
             self.problem.D,
             self.starting_node,
             len(self.problem),
-            self.problem.solution_size,
         )
 
     @staticmethod
     @njit()
-    def _solve(D, starting, problem_size, solution_size):
-        current = int(np.argmin(D[starting]))
-        solution = [starting, current]
-        not_visited = set(range(problem_size))
-        not_visited.remove(starting)
-        not_visited.remove(current)
+    def _solve(D, starting, solution_size):
+        solution = [starting]
+        visited = np.zeros(len(D))
+        visited[starting] = 1
 
-        # Find nearest neighbor considering all positions from current solution
-        for _ in range(solution_size - 2):
-            best_i = -1
-            best_j = -1
-            best_delta = np.inf
-            for i in range(len(solution)):
-                # find new candidate
-                for j in not_visited:
-                    pos = solution[i]
-                    nextpos = solution[(i + 1) % len(solution)]
-                    delta = D[pos, j] + D[j, nextpos] - D[pos, nextpos]
+        for _ in range(solution_size - 1):
+            best_i, best_node, best_delta = -1, -1, np.inf
+            for i, (first, second) in enumerate(pairwise_circular(solution)):
+                for node in np.where(visited == 0)[0]:
+                    delta = D[first, node] + D[node, second] - D[first, second]
                     if delta < best_delta:
-                        best_i = i
-                        best_j = j
-                        best_delta = delta
-
-            # Add found best candidate
-            solution.insert(best_i + 1, best_j)
-            not_visited.remove(best_j)
-
+                        best_i, best_node, best_delta = i, node, delta
+            solution.insert(best_i + 1, best_node)
+            visited[best_node] = 1
         return np.array(solution)
