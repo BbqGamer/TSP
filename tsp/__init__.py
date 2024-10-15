@@ -12,7 +12,6 @@ class TSP:
         self.D = np.sqrt(np.sum(diffs**2, axis=-1))
         self.D = np.floor(self.D + 0.5)  # mathematical rounding
         self.D += weights
-        self.D += np.diag(np.repeat(np.inf, len(points)))
 
     @classmethod
     def from_csv(cls, filename: str):

@@ -40,7 +40,7 @@ class NNHead(Solver):
         visited = np.zeros(len(self.problem), dtype=bool)
         visited[self.starting_node] = True
 
-        for _ in range(1, self.problem.solution_size):
+        for _ in range(self.problem.solution_size - 1):
             unvisited_distances = self.problem.D[current][~visited]
             nearest_neighbor_index = np.argmin(unvisited_distances)
             nearest_neighbor = np.where(~visited)[0][nearest_neighbor_index]
@@ -63,26 +63,32 @@ class NNWhole(Solver):
         )
 
     @staticmethod
-    @njit()
     def _solve(D, starting, solution_size):
-        current = starting
-        solution = [current]
+        current = int(np.argmin(D[starting]))
+        solution = [starting, current]
 
-        # Find nearest neighbor considering all positions from current solution
-        D[:, current] = np.inf  # prevent finding it as best new node
-        for _ in range(1, solution_size):
+        visited = np.zeros(len(D), dtype=bool)
+        visited[current] = True
+        visited[solution] = True
+
+        for _ in range(solution_size - 2):
             best_posi = -1
-            best_dist = np.inf
+            best_delta = np.inf
             best_nn = -1
             for i, pos in enumerate(solution):
-                nn = np.argmin(D[pos])
-                dist = D[pos][nn]
-                if dist < best_dist:
+                # find closest neighbor to pos from solution
+                unvisited_distances = D[pos][~visited]
+                nearest_neighbor_index = np.argmin(unvisited_distances)
+                nn = int(np.where(~visited)[0][nearest_neighbor_index])
+
+                nextpos = solution[(i + 1) % len(solution)]
+                delta = D[pos][nn] + D[nn][nextpos] - D[pos][nextpos]
+                if delta < best_delta:
                     best_posi = i
-                    best_dist = dist
-                    best_nn = int(nn)
-            solution.insert(best_posi, best_nn)
-            D[:, best_nn] = np.inf
+                    best_delta = delta
+                    best_nn = nn
+            solution.insert(best_posi + 1, best_nn)
+            visited[best_nn] = True
 
         return np.array(solution)
 
@@ -110,18 +116,16 @@ class GreedyCycle(Solver):
         not_visited.remove(current)
 
         # Find nearest neighbor considering all positions from current solution
-        for _ in range(2, solution_size):
+        for _ in range(solution_size - 2):
             best_i = -1
             best_j = -1
             best_delta = np.inf
-            for i in range(len(solution) - 1):
+            for i in range(len(solution)):
                 # find new candidate
                 for j in not_visited:
-                    delta = (
-                        D[solution[i], j]
-                        + D[j, solution[i + 1]]
-                        - D[solution[i], solution[i + 1]]
-                    )
+                    pos = solution[i]
+                    nextpos = solution[(i + 1) % len(solution)]
+                    delta = D[pos, j] + D[j, nextpos] - D[pos, nextpos]
                     if delta < best_delta:
                         best_i = i
                         best_j = j
