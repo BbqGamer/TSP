@@ -46,9 +46,6 @@ class TSP:
             )  # Highlight the path
             title += f" (score: {score})"
 
-        for node in range(len(self._points)):
-            plt.text(x[node] + 0.6, y[node], f"{node}", fontsize=10, color="black")
-
         plt.title(title)
         plt.show()
 
