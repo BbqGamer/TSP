@@ -75,13 +75,15 @@ def test_intra_edge_touching_2(instance, solution):
 
 def test_inter_node(instance):
     solution = np.array([0, 1, 2])
+    unselected_nodes = np.array([3, 4, 5])
     score_before = instance.score(solution)
 
-    i, node = 2, 3
-    delta = inter_node_exchange_delta(instance.D, solution, i, node)
+    i, k = 2, 0
+    delta = inter_node_exchange_delta(instance.D, solution, i, unselected_nodes, k)
 
-    inter_node_exchange(solution, i, node)
+    inter_node_exchange(solution, i, unselected_nodes, k)
     assert (solution == np.array([0, 1, 3])).all()
+    assert (unselected_nodes == np.array([2, 4, 5])).all()
 
     score_after = instance.score(solution)
     assert delta == score_after - score_before
@@ -89,13 +91,15 @@ def test_inter_node(instance):
 
 def test_inter_node_beginning(instance):
     solution = np.array([0, 1, 2])
+    unselected_nodes = np.array([4, 5, 3])
     score_before = instance.score(solution)
 
-    i, node = 0, 3
-    delta = inter_node_exchange_delta(instance.D, solution, i, node)
+    i, k = 0, 2
+    delta = inter_node_exchange_delta(instance.D, solution, i, unselected_nodes, k)
 
-    inter_node_exchange(solution, i, node)
+    inter_node_exchange(solution, i, unselected_nodes, k)
     assert (solution == np.array([3, 1, 2])).all()
+    assert (unselected_nodes == np.array([4, 5, 0])).all()
 
     score_after = instance.score(solution)
     assert delta == score_after - score_before

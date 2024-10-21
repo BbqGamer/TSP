@@ -42,13 +42,14 @@ def intra_edge_exchange_delta(D, sol, i, j):
          - D[a, a_next] - D[b_next, b]
 
 
-def inter_node_exchange(sol, i, node):
-    sol[i] = node
+def inter_node_exchange(sol, i, unselected_nodes, k):
+    sol[i], unselected_nodes[k] = unselected_nodes[k], sol[i]
 
-def inter_node_exchange_delta(D, sol, i, node):
+def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     """Calculate change in objective function if you exchange nodes sol[i] and some node (not in sol)"""
     a = sol[i]
     a_prev = sol[i - 1]
     a_next = sol[(i + 1) % len(sol)]
+    node = unselected_nodes[k]
     return D[a_prev, node] + D[node, a_next] \
          - D[a_prev, a] - D[a, a_next]
