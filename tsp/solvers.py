@@ -8,6 +8,7 @@ from tsp import TSP
 
 class Solver(Protocol):
     def __init__(self, problem: TSP): ...
+
     def solve(self) -> np.ndarray:
         """Solution should be a path of indices, every index should be different
         We assume that there is an edge between all pairs and between last with first
@@ -99,7 +100,7 @@ class GreedyCycle(Solver):
         return GreedyCycle._solve(
             self.problem.D,
             self.starting_node,
-            len(self.problem),
+            self.problem.solution_size,
         )
 
     @staticmethod
