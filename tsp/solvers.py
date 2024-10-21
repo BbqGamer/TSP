@@ -99,7 +99,7 @@ class GreedyCycle(Solver):
         return GreedyCycle._solve(
             self.problem.D,
             self.starting_node,
-            len(self.problem),
+            self.problem.solution_size,
         )
 
     @staticmethod
@@ -116,6 +116,83 @@ class GreedyCycle(Solver):
                     delta = D[first, node] + D[node, second] - D[first, second]
                     if delta < best_delta:
                         best_i, best_node, best_delta = i, node, delta
+            solution.insert(best_i + 1, best_node)
+            visited[best_node] = 1
+        return np.array(solution)
+
+
+class RegretGreedyCycle(Solver):
+    def __init__(self, problem: TSP, starting_node: int):
+        self.problem = problem
+        self.starting_node = starting_node
+
+    def solve(self) -> np.ndarray:
+        return RegretGreedyCycle._solve(
+            self.problem.D,
+            self.starting_node,
+            self.problem.solution_size,
+        )
+
+    @staticmethod
+    @njit()
+    def _solve(D, starting, solution_size):
+        solution = [starting]
+        visited = np.zeros(len(D))
+        visited[starting] = 1
+
+        for _ in range(solution_size - 1):
+            best_i, best_node, best_score = -1, -1, np.inf
+            for node in np.where(visited == 0)[0]:
+                bests = []
+                for i, (first, second) in enumerate(pairwise_circular(solution)):
+                    delta = D[first, node] + D[node, second] - D[first, second]
+                    bests.append((delta,i))
+                if(len(bests)==1):
+                    best_node = node
+                else:
+                    bests = sorted(bests, key=lambda x: x[0])
+                    regret = bests[0][0] - bests[1][0]
+                    if regret < best_score:
+                        best_i, best_node, best_score = bests[0][1], node, regret
+            solution.insert(best_i + 1, best_node)
+            visited[best_node] = 1
+        return np.array(solution)
+    
+class WeightedRegretGreedyCycle(Solver):
+    def __init__(self, problem: TSP, starting_node: int):
+        self.problem = problem
+        self.starting_node = starting_node
+
+    def solve(self) -> np.ndarray:
+        return WeightedRegretGreedyCycle._solve(
+            self.problem.D,
+            self.starting_node,
+            self.problem.solution_size,
+        )
+
+    @staticmethod
+    @njit()
+    def _solve(D, starting, solution_size):
+        solution = [starting]
+        visited = np.zeros(len(D))
+        visited[starting] = 1
+
+        for _ in range(solution_size - 1):
+            best_i, best_node, best_score = -1, -1, np.inf
+            for node in np.where(visited == 0)[0]:
+                bests = []
+                for i, (first, second) in enumerate(pairwise_circular(solution)):
+                    delta = D[first, node] + D[node, second] - D[first, second]
+                    bests.append((delta,i))
+                if(len(bests)==1):
+                    best_node = node
+                else:
+                    bests = sorted(bests, key=lambda x: x[0])
+                    regret = bests[0][0] - bests[1][0]
+                    curr_delta = bests[0][0]
+                    score = 0.5*regret + 0.5*curr_delta
+                    if score < best_score:
+                        best_i, best_node, best_score = bests[0][1], node, score
             solution.insert(best_i + 1, best_node)
             visited[best_node] = 1
         return np.array(solution)
