@@ -1,4 +1,5 @@
 from tsp import TSP, score
+import typing
 from tsp.localsearch import local_search_greedy, local_search_steepest, random_starting, LocalSearchMethod
 from tsp.localsearch.moves import IntraType
 import numpy as np
@@ -28,12 +29,10 @@ def random_start_greedy_experiment(
 if __name__ == "__main__":
     problem = TSP.from_csv("data/TSPA.csv")
 
-    best_sol = random_start_greedy_experiment(
-        len(problem), problem.solution_size, problem.D, "intra_node", "steepest"
-    )
-    problem.visualize(best_sol)
-
-    best_sol = random_start_greedy_experiment(
-        len(problem), problem.solution_size, problem.D, "intra_edge", "steepest"
-    )
-    problem.visualize(best_sol)
+    for intra_move in typing.get_args(IntraType):
+        for method in typing.get_args(LocalSearchMethod):
+            print(intra_move, method)
+            best_sol = random_start_greedy_experiment(
+                len(problem), problem.solution_size, problem.D, intra_move, method
+            )
+            problem.visualize(best_sol)

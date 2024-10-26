@@ -78,11 +78,12 @@ def greedy_descent(sol, unselected, D, intra_move: IntraType) -> bool:
         for k in range(len(unselected)):
             moves.append(("inter_node", i, k))
 
-    np.random.shuffle(moves)
+    indices = np.arange(len(moves))
+    np.random.shuffle(indices)
 
     improved = False
-    for mov in moves:
-        mov_type, i, j = mov
+    for m in indices:
+        mov_type, i, j = moves[m]
         if mov_type == "intra_node":
             delta = intra_node_exchange_delta(D, sol, i, j)
         elif mov_type == "intra_edge":
@@ -90,7 +91,7 @@ def greedy_descent(sol, unselected, D, intra_move: IntraType) -> bool:
         else:
             delta = inter_node_exchange_delta(D, sol, i, unselected, j)
         if delta < 0.0:
-            apply_move(sol, unselected, mov)
+            apply_move(sol, unselected, moves[m])
             improved = True
             break
     return improved
