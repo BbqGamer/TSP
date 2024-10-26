@@ -1,15 +1,24 @@
-from tsp.localsearch.descent import steepest_descent
+from tsp.localsearch.descent import greedy_descent, steepest_descent, IntraType
 import numpy as np
+from typing import Literal
 from numba import njit
+
+LocalSearchMethod = Literal["steepest", "greedy"]
 
 
 @njit()
-def local_search_steepest(sol, unselected, D, intra_node: bool) -> np.ndarray:
+def local_search_steepest(sol, unselected, D, intra_move: IntraType) -> np.ndarray:
     while True:
-        improved = steepest_descent(sol, unselected, D, intra_node)
+        improved = steepest_descent(sol, unselected, D, intra_move)
         if not improved:
             return sol
 
+@njit()
+def local_search_greedy(sol, unselected, D, intra_move: IntraType) -> np.ndarray:
+    while True:
+        improved = greedy_descent(sol, unselected, D, intra_move)
+        if not improved:
+            return sol
 
 @njit()
 def random_starting(n, sol_size) -> tuple[np.ndarray, np.ndarray]:
