@@ -4,9 +4,9 @@ from numba import njit
 
 
 @njit()
-def local_search_steepest(sol, unselected, D) -> np.ndarray:
+def local_search_steepest(sol, unselected, D, intra_node: bool) -> np.ndarray:
     while True:
-        improved = steepest_descent(sol, unselected, D)
+        improved = steepest_descent(sol, unselected, D, intra_node)
         if not improved:
             return sol
 
