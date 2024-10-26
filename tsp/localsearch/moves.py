@@ -67,3 +67,14 @@ def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     node = unselected_nodes[k]
     return D[a_prev, node] + D[node, a_next] \
         - D[a_prev, a] - D[a, a_next]
+
+
+@njit()
+def apply_move(sol, unselected, best_move):
+    move_type, i, j = best_move
+    if move_type == "intra_node":
+        intra_node_exchange(sol, i, j)
+    elif move_type == "intra_edge":
+        intra_edge_exchange(sol, i, j)
+    else:
+        inter_node_exchange(sol, i, unselected, j)
