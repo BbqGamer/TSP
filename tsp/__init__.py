@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numba import njit
 
 
 class TSP:
@@ -57,10 +58,14 @@ class TSP:
         """It is required for us to only use 50% of nodes in solution"""
         return int(np.fix(len(self) / 2))
 
-    def score(self, solution: np.ndarray) -> float:
+    def score(self, solution: np.ndarray):
         """Return's the score of the solution"""
-        closed_path = np.concatenate((solution, [solution[0]]))
-        index_pairs = np.vstack((closed_path[:-1], closed_path[1:])).T
-        score = np.sum(self.D[index_pairs[:, 0], index_pairs[:, 1]])
+        return score(solution, self.D)
 
-        return score
+
+@njit()
+def score(solution: np.ndarray, D: np.ndarray):
+    total_cost = 0
+    for i in range(len(solution)):
+        total_cost += D[solution[i-1], solution[i]]
+    return total_cost

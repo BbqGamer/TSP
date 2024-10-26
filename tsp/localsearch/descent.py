@@ -1,8 +1,10 @@
 import numpy as np
 
 from tsp.localsearch.moves import inter_node_exchange, intra_node_exchange, intra_node_exchange_delta, inter_node_exchange_delta, Move
+from numba import njit
 
 
+@njit()
 def steepest_descent(sol, unselected, D) -> bool:
     """Takes one step of greedy descent (using intra and inter node exchange)
     Returns: True if objective function improved and False otherwise"""

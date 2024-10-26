@@ -1,14 +1,17 @@
 import numpy as np
 from typing import Literal
+from numba import njit
 
 
 Move = tuple[Literal["intra_node", "intra_edge", "inter_node"], int, int]
 
 
+@njit()
 def intra_node_exchange(sol, i, j):
     sol[i], sol[j] = sol[j], sol[i]
 
 
+@njit()
 def intra_node_exchange_delta(D, sol, i, j):
     """Calculate change in objective function if you exchange sol[i] and sol[j] nodes"""
     n = len(sol)
@@ -32,10 +35,12 @@ def intra_node_exchange_delta(D, sol, i, j):
         - D[a_prev, a] - D[a, a_next] - D[b_prev, b] - D[b, b_next]
 
 
+@njit()
 def intra_edge_exchange(sol, i, j):
     sol[i+1:j+1] = np.flip(sol[i+1:j+1])
 
 
+@njit()
 def intra_edge_exchange_delta(D, sol, i, j):
     """Calculate change in objective function if you exchange i-th and j-th edges from sol"""
     n = len(sol)
@@ -48,10 +53,12 @@ def intra_edge_exchange_delta(D, sol, i, j):
         - D[a, a_next] - D[b_next, b]
 
 
+@njit()
 def inter_node_exchange(sol, i, unselected_nodes, k):
     sol[i], unselected_nodes[k] = unselected_nodes[k], sol[i]
 
 
+@njit()
 def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     """Calculate change in objective function if you exchange nodes sol[i] and some node (not in sol)"""
     a = sol[i]
