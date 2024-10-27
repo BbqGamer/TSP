@@ -1,15 +1,24 @@
+import csv
 from tsp import TSP, score
+from tsp.solvers import solve_greedy_cycle  
 import typing
-from tsp.localsearch import local_search_greedy, local_search_steepest, random_starting, LocalSearchMethod
+from tsp.localsearch import (
+    local_search_greedy,
+    local_search_steepest,
+    random_starting,
+    LocalSearchMethod,
+)
 import time
 from tsp.localsearch.moves import IntraType
 import numpy as np
 from numba import njit, objmode
 
 
+StartingMethod = typing.Literal["random", "heuristic"]
+
 @njit(cache=True)
 def random_start_greedy_experiment(
-    n, sol_size, D, intra_move: IntraType, method: LocalSearchMethod
+    n, sol_size, D, intra_move: IntraType, method: LocalSearchMethod, starting: StartingMethod
 ):
     np.random.seed(42)
 
@@ -17,8 +26,13 @@ def random_start_greedy_experiment(
     times = []
     iters = []
     for i in range(200):
-        start_sol, unselected = random_starting(n, sol_size)
-        with objmode(start='f8'):
+        if starting == "random":
+            start_sol, unselected = random_starting(n, sol_size)
+        else:
+            start_sol = solve_greedy_cycle(D, i, sol_size)
+            unselected = np.array([i for i in range(n) if i not in start_sol])
+
+        with objmode(start="f8"):
             start = time.perf_counter()
 
         if method == "steepest":
@@ -26,7 +40,7 @@ def random_start_greedy_experiment(
         else:
             sol, num_iters = local_search_greedy(start_sol, unselected, D, intra_move)
 
-        with objmode(end='f8'):
+        with objmode(end="f8"):
             end = time.perf_counter()
 
         times.append(end - start)
@@ -36,15 +50,38 @@ def random_start_greedy_experiment(
 
 
 if __name__ == "__main__":
-    for file in ["data/TSPA.csv", "data/TSPB.csv"]:
-        problem = TSP.from_csv(file)
-        print(f"--- {file} ---")
-        for intra_move in typing.get_args(IntraType):
-            for method in typing.get_args(LocalSearchMethod):
-                print(" ", intra_move, method)
-                scores, times, iters = random_start_greedy_experiment(
-                    len(problem), problem.solution_size, problem.D, intra_move, method
-                )
-                print(f"   score:\t{int(min(scores))}\t{int(sum(scores)/len(scores))}\t{int(max(scores))}")
-                print(f"   times:\t{min(times):.3f}\t{sum(times)/len(times):.3f}\t{max(times):.3f}")
-                print(f"   iters:\t{int(min(iters))}\t{int(sum(iters)/len(iters))}\t{int(max(iters))}")
+    with open("results/assignment3.csv", "w") as f:
+        writer = csv.writer(f)
+        for prob in ["TSPA", "TSPB"]:
+            problem = TSP.from_csv("data/" + prob + ".csv")
+            print(f"--- {prob} ---")
+            for intra_move in typing.get_args(IntraType):
+                for search_method in typing.get_args(LocalSearchMethod):
+                    for start_method in typing.get_args(StartingMethod):
+                        print(" ", intra_move, search_method)
+                        scores, times, iters = random_start_greedy_experiment(
+                            len(problem),
+                            problem.solution_size,
+                            problem.D,
+                            intra_move,
+                            search_method,
+                            start_method
+                        )
+
+                        row = [
+                            prob,
+                            search_method,
+                            intra_move,
+                            start_method,
+                            int(min(scores)),
+                            int(sum(scores) / len(scores)),
+                            int(max(scores)),
+                            min(times),
+                            sum(times)/ len(times),
+                            max(times),
+                            int(min(iters)),
+                            int(sum(iters)/len(iters)),
+                            int(max(iters))
+                        ]
+                        print(row)
+                        writer.writerow(row)

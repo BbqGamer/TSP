@@ -97,26 +97,25 @@ class GreedyCycle(Solver):
         self.starting_node = starting_node
 
     def solve(self) -> np.ndarray:
-        return GreedyCycle._solve(
+        return solve_greedy_cycle(
             self.problem.D,
             self.starting_node,
             self.problem.solution_size,
         )
 
-    @staticmethod
-    @njit()
-    def _solve(D, starting, solution_size):
-        solution = [starting]
-        visited = np.zeros(len(D))
-        visited[starting] = 1
+@njit()
+def solve_greedy_cycle(D, starting, solution_size):
+    solution = [starting]
+    visited = np.zeros(len(D))
+    visited[starting] = 1
 
-        for _ in range(solution_size - 1):
-            best_i, best_node, best_delta = -1, -1, np.inf
-            for i, (first, second) in enumerate(pairwise_circular(solution)):
-                for node in np.where(visited == 0)[0]:
-                    delta = D[first, node] + D[node, second] - D[first, second]
-                    if delta < best_delta:
-                        best_i, best_node, best_delta = i, node, delta
-            solution.insert(best_i + 1, best_node)
-            visited[best_node] = 1
-        return np.array(solution)
+    for _ in range(solution_size - 1):
+        best_i, best_node, best_delta = -1, -1, np.inf
+        for i, (first, second) in enumerate(pairwise_circular(solution)):
+            for node in np.where(visited == 0)[0]:
+                delta = D[first, node] + D[node, second] - D[first, second]
+                if delta < best_delta:
+                    best_i, best_node, best_delta = i, node, delta
+        solution.insert(best_i + 1, best_node)
+        visited[best_node] = 1
+    return np.array(solution)
