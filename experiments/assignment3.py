@@ -1,6 +1,6 @@
 import csv
 from tsp import TSP, score
-from tsp.solvers import solve_greedy_cycle  
+from tsp.solvers import solve_greedy_cycle
 import typing
 from tsp.localsearch import (
     local_search_greedy,
@@ -73,4 +73,10 @@ if __name__ == "__main__":
                         print(f" - {sum(times) / len(times) * 1000} ms")
                         for i in range(len(scores)):
                             writer.writerow([prob, method, i, int(scores[i]), times[i], iters[i]])
-                        
+
+    with open("results/assignment3.csv", "a") as f:
+        writer = csv.writer(f)
+        for prob in ["TSPA", "TSPB"]:
+            problem = TSP.from_csv("data/" + prob + ".csv")
+            print(f"--- {prob} ---")
+            for method in
