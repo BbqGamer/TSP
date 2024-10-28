@@ -16,9 +16,15 @@ from numba import njit, objmode
 
 StartingMethod = typing.Literal["random", "heuristic"]
 
+
 @njit(cache=True)
 def random_start_greedy_experiment(
-    n, sol_size, D, intra_move: IntraType, method: LocalSearchMethod, starting: StartingMethod
+    n,
+    sol_size,
+    D,
+    intra_move: IntraType,
+    method: LocalSearchMethod,
+    starting: StartingMethod,
 ):
     np.random.seed(42)
 
@@ -52,7 +58,7 @@ def random_start_greedy_experiment(
 if __name__ == "__main__":
     with open("results/assignment3.csv", "w") as f:
         writer = csv.writer(f)
-        writer.writerow(["problem","method","i","score", "time", "iter"])
+        writer.writerow(["problem", "method", "i", "score", "time", "iter"])
         for prob in ["TSPA", "TSPB"]:
             problem = TSP.from_csv("data/" + prob + ".csv")
             print(f"--- {prob} ---")
@@ -67,16 +73,11 @@ if __name__ == "__main__":
                             problem.D,
                             intra_move,
                             search_method,
-                            start_method
+                            start_method,
                         )
 
                         print(f" - {sum(times) / len(times) * 1000} ms")
                         for i in range(len(scores)):
-                            writer.writerow([prob, method, i, int(scores[i]), times[i], iters[i]])
-
-    with open("results/assignment3.csv", "a") as f:
-        writer = csv.writer(f)
-        for prob in ["TSPA", "TSPB"]:
-            problem = TSP.from_csv("data/" + prob + ".csv")
-            print(f"--- {prob} ---")
-            for method in
+                            writer.writerow(
+                                [prob, method, i, int(scores[i]), times[i], iters[i]]
+                            )

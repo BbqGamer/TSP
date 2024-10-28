@@ -198,5 +198,3 @@ def solve_weighted_regret_greedy_cycle(D, starting, solution_size):
         solution.insert(best_i + 1, best_node)
         visited[best_node] = 1
     return np.array(solution)
-
-
