@@ -52,13 +52,15 @@ def random_start_greedy_experiment(
 if __name__ == "__main__":
     with open("results/assignment3.csv", "w") as f:
         writer = csv.writer(f)
+        writer.writerow(["problem","method","i","score", "time", "iter"])
         for prob in ["TSPA", "TSPB"]:
             problem = TSP.from_csv("data/" + prob + ".csv")
             print(f"--- {prob} ---")
             for intra_move in typing.get_args(IntraType):
                 for search_method in typing.get_args(LocalSearchMethod):
                     for start_method in typing.get_args(StartingMethod):
-                        print(" ", intra_move, search_method)
+                        method = intra_move + "_" + search_method + "_" + start_method
+                        print(method)
                         scores, times, iters = random_start_greedy_experiment(
                             len(problem),
                             problem.solution_size,
@@ -68,20 +70,7 @@ if __name__ == "__main__":
                             start_method
                         )
 
-                        row = [
-                            prob,
-                            search_method,
-                            intra_move,
-                            start_method,
-                            int(min(scores)),
-                            int(sum(scores) / len(scores)),
-                            int(max(scores)),
-                            min(times),
-                            sum(times)/ len(times),
-                            max(times),
-                            int(min(iters)),
-                            int(sum(iters)/len(iters)),
-                            int(max(iters))
-                        ]
-                        print(row)
-                        writer.writerow(row)
+                        print(f" - {sum(times) / len(times) * 1000} ms")
+                        for i in range(len(scores)):
+                            writer.writerow([prob, method, i, int(scores[i]), times[i], iters[i]])
+                        
