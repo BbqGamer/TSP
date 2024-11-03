@@ -7,6 +7,20 @@ Move = tuple[Literal["intra_node", "intra_edge", "inter_node"], int, int]
 IntraType = Literal["intra_node", "intra_edge"]
 
 
+
+@njit(cache=False)
+def apply_intra_move_candidate_edge(sol, i, j, best_prev_or_next):
+    if best_prev_or_next == 0:
+        sol[i:j] = np.flip(sol[i:j])
+    else:
+        sol[i + 1:j + 1] = np.flip(sol[i + 1:j + 1])
+@njit(cache=False)
+def apply_inter_move_candidate_edge(sol, unselected, i, k, best_prev_or_next):
+    if best_prev_or_next == 0:
+        sol[i - 1], unselected[k] = unselected[k], sol[i - 1]
+    else:
+        sol[(i + 1) % len(sol)], unselected[k] = unselected[k], sol[(i + 1) % len(sol)]
+
 @njit()
 def intra_node_exchange(sol, i, j):
     sol[i], sol[j] = sol[j], sol[i]
@@ -53,6 +67,29 @@ def intra_edge_exchange_delta(D, sol, i, j):
     return D[b_next, a_next] + D[a, b] \
         - D[a, a_next] - D[b_next, b]
 
+@njit(cache=False)
+def intra_candidate_edge_exchange_delta_prev(D, sol, i, j):
+    """Calculate change in objective function if you exchange edges from i-th and j-th nodes"""
+    a = sol[i]
+    b = sol[j]
+    #candidate edge is a,b
+    a_prev = sol[i - 1]
+    b_prev = sol[j - 1]
+    return D[b_prev, a_prev] + D[a, b] \
+        - D[a, a_prev] - D[b_prev, b]
+
+@njit(cache=False)
+def intra_candidate_edge_exchange_delta_next(D, sol, i, j):
+    """Calculate change in objective function if you exchange edges from i-th and j-th nodes"""
+    n = len(sol)
+    a = sol[i]
+    b = sol[j]
+    a_next = sol[(i + 1) % n]
+    b_next = sol[(j + 1) % n]
+    return D[b_next, a_next] + D[a, b] \
+        - D[a, a_next] - D[b_next, b]
+
+
 
 @njit()
 def inter_node_exchange(sol, i, unselected_nodes, k):
@@ -68,6 +105,26 @@ def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     node = unselected_nodes[k]
     return D[a_prev, node] + D[node, a_next] \
         - D[a_prev, a] - D[a, a_next]
+
+@njit(cache=False)
+def inter_node_candidate_edge_exchange_delta_prev(D, sol, i, unselected_nodes, k):
+    """Calculate change in objective function if you exchange nodes sol[i] and some node (not in sol)"""
+    a = sol[i]
+    a_prev = sol[i - 1]
+    a_prev_prev = sol[i - 2]
+    node = unselected_nodes[k]
+    return D[a_prev_prev, node] + D[node, a] \
+        - D[a_prev_prev, a_prev] - D[a_prev, a]
+
+@njit(cache=False)
+def inter_node_candidate_edge_exchange_delta_next(D, sol, i, unselected_nodes, k):
+    """Calculate change in objective function if you exchange nodes sol[i] and some node (not in sol)"""
+    a = sol[i]
+    a_next = sol[(i + 1) % len(sol)]
+    a_next_next = sol[(i + 2) % len(sol)]
+    node = unselected_nodes[k]
+    return D[a, node] + D[node, a_next_next] \
+        - D[a, a_next] - D[a_next, a_next_next]
 
 
 @njit()

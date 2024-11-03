@@ -1,4 +1,4 @@
-from tsp.localsearch.descent import greedy_descent, steepest_descent, IntraType
+from tsp.localsearch.descent import greedy_descent, steepest_descent, IntraType, steepest_descent_candidate_edges
 import numpy as np
 from typing import Literal
 from numba import njit
@@ -11,6 +11,14 @@ def local_search_steepest(sol, unselected, D, intra_move: IntraType) -> tuple[np
     num_iterations = 0
     while True:
         improved = steepest_descent(sol, unselected, D, intra_move)
+        num_iterations += 1
+        if not improved:
+            return sol, num_iterations
+@njit()
+def local_search_steepest_candidate_edge(sol, unselected, D, intra_move: IntraType) -> tuple[np.ndarray, int]:
+    num_iterations = 0
+    while True:
+        improved = steepest_descent_candidate_edges(sol, unselected, D, intra_move)
         num_iterations += 1
         if not improved:
             return sol, num_iterations
