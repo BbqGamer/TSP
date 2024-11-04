@@ -33,6 +33,10 @@ def random_start_greedy_experiment(
     scores = []
     times = []
     iters = []
+    n_neighbors = 10
+    closest_nodes = np.empty((200, n_neighbors), dtype=np.int64)
+    for i in range(200):
+        closest_nodes[i, :] = np.argsort(D[i])[:n_neighbors]
     for i in range(200):
         if starting == "random":
             start_sol, unselected = random_starting_from_starting(n, sol_size, i)
@@ -45,7 +49,7 @@ def random_start_greedy_experiment(
 
         if method == "steepest":
             sol, num_iters = local_search_steepest_candidate_edge(
-                start_sol, unselected, D, intra_move
+                start_sol, unselected, D, closest_nodes
             )
         else:
             sol, num_iters = local_search_greedy(start_sol, unselected, D, intra_move)
