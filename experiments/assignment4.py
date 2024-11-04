@@ -7,6 +7,7 @@ from tsp.localsearch import (
     local_search_steepest,
     local_search_steepest_candidate_edge,
     random_starting,
+    random_starting_from_starting,
 )
 import time
 from tsp.localsearch.moves import IntraType
@@ -18,7 +19,7 @@ StartingMethod = typing.Literal["random"]
 LocalSearchMethod = typing.Literal["steepest"]
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def random_start_greedy_experiment(
     n,
     sol_size,
@@ -34,7 +35,7 @@ def random_start_greedy_experiment(
     iters = []
     for i in range(200):
         if starting == "random":
-            start_sol, unselected = random_starting(n, sol_size)
+            start_sol, unselected = random_starting_from_starting(n, sol_size, i)
         else:
             start_sol = solve_greedy_cycle(D, i, sol_size)
             unselected = np.array([i for i in range(n) if i not in start_sol])
@@ -43,7 +44,9 @@ def random_start_greedy_experiment(
             start = time.perf_counter()
 
         if method == "steepest":
-            sol, num_iters = local_search_steepest_candidate_edge(start_sol, unselected, D, intra_move)
+            sol, num_iters = local_search_steepest_candidate_edge(
+                start_sol, unselected, D, intra_move
+            )
         else:
             sol, num_iters = local_search_greedy(start_sol, unselected, D, intra_move)
 
@@ -57,6 +60,7 @@ def random_start_greedy_experiment(
 
 
 if __name__ == "__main__":
+    # seed numpy for reproducibility
     with open("results/assignment4.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(["problem", "method", "i", "score", "time", "iter"])

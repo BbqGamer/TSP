@@ -45,14 +45,13 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
                     best_delta = delta
                     best_move = ("intra_edge", i, j)
 
-    #Inter-route node exchange:
+    # Inter-route node exchange:
     for i in range(n):
         for k in range(len(unselected)):
             delta = inter_node_exchange_delta(D, sol, i, unselected, k)
             if delta < best_delta:
                 best_delta = delta
                 best_move = ("inter_node", i, k)
-            
 
     if best_move is not None:
         apply_move(sol, unselected, best_move)
@@ -77,20 +76,36 @@ def steepest_descent_candidate_edges(sol, unselected, D, intra_move):
     best_prev_or_next = -1
 
     # Convert sol to a set-like array for fast membership checking
-    sol_mask = np.zeros(len(D), dtype=np.bool_)
+    sol_mask = np.zeros(len(D), dtype=np.int64)
     for s in sol:
-        sol_mask[s] = True
+        sol_mask[s] = 1
+
+    # print(sol)
 
     for i in range(n):
+        # print(f"Processing i={i}")
         # Take closest 10 nodes
-        closest_nodes = np.argsort(D[sol[i]])[:10]
+        closest_nodes = np.argsort(D[sol[i]])[:13]
+        # print(f"Closest nodes: {closest_nodes}")
 
         # Separate intra and inter nodes based on sol_mask
-        intra_closest_nodes = [node for node in closest_nodes if sol_mask[node]]
-        inter_closest_nodes = [node for node in closest_nodes if not sol_mask[node]]
+        intra_closest_nodes = [
+            node
+            for node in closest_nodes
+            if sol_mask[node] == 1
+            and node != sol[i]
+            and node != sol[(i + 1) % n]
+            and node != sol[(i - 1) % n]
+        ]
+        inter_closest_nodes = [node for node in closest_nodes if sol_mask[node] == 0]
+
+        # print(f"Intra closest nodes: {intra_closest_nodes}")
+        # print(f"Inter closest nodes: {inter_closest_nodes}")
 
         # Intra-route edge exchange
-        for j in intra_closest_nodes:
+        for j_node in intra_closest_nodes:
+            j = np.where(sol == j_node)[0][0]
+            # print(f"Processing j={j}, j_node={j_node}")
             for prev_or_next in [0, 1]:
                 if prev_or_next == 0:
                     delta = intra_candidate_edge_exchange_delta_prev(D, sol, i, j)
@@ -104,30 +119,50 @@ def steepest_descent_candidate_edges(sol, unselected, D, intra_move):
                     best_prev_or_next = prev_or_next
 
         # Inter-route edge exchange
-        for k in inter_closest_nodes:
+        for k_node in inter_closest_nodes:
+            k = np.where(unselected == k_node)[0][0]
+            # print(f"Processing k={k}, k_node={k_node}")
             for prev_or_next in [0, 1]:
                 if prev_or_next == 0:
-                    delta = inter_node_candidate_edge_exchange_delta_prev(D, sol, i, unselected, k)
+                    delta = inter_node_candidate_edge_exchange_delta_prev(
+                        D, sol, i, unselected, k
+                    )
                 else:
-                    delta = inter_node_candidate_edge_exchange_delta_next(D, sol, i, unselected, k)
+                    delta = inter_node_candidate_edge_exchange_delta_next(
+                        D, sol, i, unselected, k
+                    )
                 if delta < best_delta:
                     best_delta = delta
                     best_move_type = 1
                     best_i = i
                     best_j_or_k = k
                     best_prev_or_next = prev_or_next
+        # raise NotImplementedError("Implement this function")
 
     if best_move_type != -1:
         if best_move_type == 0:
             # Apply intra-edge move
+            # print(
+            #     "Applying intra-edge move, best_i, best_j_or_k, best_prev_or_next",
+            #     best_i,
+            #     best_j_or_k,
+            #     best_prev_or_next,
+            # )
             apply_intra_move_candidate_edge(sol, best_i, best_j_or_k, best_prev_or_next)
         elif best_move_type == 1:
             # Apply inter-node move
-            apply_inter_move_candidate_edge(sol, unselected, best_i, best_j_or_k, best_prev_or_next)
+            # print(
+            #     "Applying inter-node move, best_i, best_j_or_k, best_prev_or_next",
+            #     best_i,
+            #     best_j_or_k,
+            #     best_prev_or_next,
+            # )
+            apply_inter_move_candidate_edge(
+                sol, unselected, best_i, best_j_or_k, best_prev_or_next
+            )
         improved = True
 
     return improved
-
 
 
 @njit()
