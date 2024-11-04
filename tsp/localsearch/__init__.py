@@ -23,14 +23,21 @@ def local_search_steepest(
             return sol, num_iterations
 
 
-@njit()
+@njit(cache=False)
 def local_search_steepest_candidate_edge(
     sol, unselected, D, intra_move: IntraType
 ) -> tuple[np.ndarray, int]:
     num_iterations = 0
+    closest_nodes = np.empty((200, 13), dtype=np.int64)
+    # print(D)
+    # print(type(D))
+    # print(type(D[0]))
+    for i in range(200):
+        closest_nodes[i, :] = np.argsort(D[i])[:13]
+    # closest_nodes = np.array(closest_nodes)
     while True:
         # print("steepest_candidate_edge, iteration", num_iterations)
-        improved = steepest_descent_candidate_edges(sol, unselected, D, intra_move)
+        improved = steepest_descent_candidate_edges(sol, unselected, D, closest_nodes)
         num_iterations += 1
         if not improved:
             return sol, num_iterations

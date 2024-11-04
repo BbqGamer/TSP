@@ -60,7 +60,7 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
 
 
 @njit(cache=False)
-def steepest_descent_candidate_edges(sol, unselected, D, intra_move):
+def steepest_descent_candidate_edges(sol, unselected, D, closest_nodes):
     """
     Takes one step of steepest descent using inter-route node exchange
     and for intra-route it uses node exchange or edge exchange.
@@ -85,19 +85,21 @@ def steepest_descent_candidate_edges(sol, unselected, D, intra_move):
     for i in range(n):
         # print(f"Processing i={i}")
         # Take closest 10 nodes
-        closest_nodes = np.argsort(D[sol[i]])[:13]
+        closest_nodes_selected = closest_nodes[sol[i]]
         # print(f"Closest nodes: {closest_nodes}")
 
         # Separate intra and inter nodes based on sol_mask
         intra_closest_nodes = [
             node
-            for node in closest_nodes
+            for node in closest_nodes_selected
             if sol_mask[node] == 1
             and node != sol[i]
             and node != sol[(i + 1) % n]
             and node != sol[(i - 1) % n]
         ]
-        inter_closest_nodes = [node for node in closest_nodes if sol_mask[node] == 0]
+        inter_closest_nodes = [
+            node for node in closest_nodes_selected if sol_mask[node] == 0
+        ]
 
         # print(f"Intra closest nodes: {intra_closest_nodes}")
         # print(f"Inter closest nodes: {inter_closest_nodes}")

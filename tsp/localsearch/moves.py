@@ -4,7 +4,7 @@ from numba import njit
 
 
 Move = tuple[Literal["intra_node", "intra_edge", "inter_node"], int, int]
-IntraType = Literal["intra_node", "intra_edge"]
+IntraType = Literal["intra_edge"]
 
 
 @njit(cache=False)

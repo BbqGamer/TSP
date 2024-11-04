@@ -19,7 +19,7 @@ StartingMethod = typing.Literal["random"]
 LocalSearchMethod = typing.Literal["steepest"]
 
 
-# @njit(cache=True)
+@njit(cache=False)
 def random_start_greedy_experiment(
     n,
     sol_size,
