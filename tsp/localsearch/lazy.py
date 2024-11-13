@@ -37,6 +37,7 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             E[b, b_next] = NULL
             E[a_next, b_next] = j
 
+            # Reverse the edges between the two nodes
             for x in range(j - i - 1):
                 left, right = sol[i + x + 1], sol[i + x + 2]
                 E[left, right] = NULL
