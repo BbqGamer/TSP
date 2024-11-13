@@ -31,6 +31,10 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
 
             i, j = E[a, a_next], E[b, b_next]
             sol[i + 1 : j + 1] = np.flip(sol[i + 1 : j + 1])
+
+            # TODO: update edge matrix and unselected map
+
+            # TODO: Add new moves to the priority queue
         else:
             a_prev, a, a_next, node = move[1:]
             if E[a_prev, a] == NULL or E[a, a_next] == NULL or U[node] == NULL:
@@ -39,6 +43,16 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             i = E[a, a_next]
             k = U[node]
             sol[i], unselected[k] = node, a
+
+            # update edge matrix and unselected map
+            E[a_prev, a] = NULL
+            E[a, a_next] = NULL
+            E[a_prev, node] = i
+            E[a_next, node] = i
+            U[node] = NULL
+            U[a] = k
+
+            # TODO: Add new moves to the priority queue
 
 
 def evaluate_all_moves(sol, unselected, D):
