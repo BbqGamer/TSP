@@ -29,13 +29,16 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             if E[a, a_next] == NULL or E[b, b_next] == NULL:
                 continue  # not applicable, we cannot remove inexistent edges
 
-            # TODO: apply intra-route edge exchange
+            i, j = E[a, a_next], E[b, b_next]
+            sol[i + 1 : j + 1] = np.flip(sol[i + 1 : j + 1])
         else:
             a_prev, a, a_next, node = move[1:]
             if E[a_prev, a] == NULL or E[a, a_next] == NULL or U[node] == NULL:
                 continue  # not applicable
 
-            # TODO: apply inter-route node exchange
+            i = E[a, a_next]
+            k = U[node]
+            sol[i], unselected[k] = node, a
 
 
 def evaluate_all_moves(sol, unselected, D):
