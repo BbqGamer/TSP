@@ -11,6 +11,36 @@ from tsp.localsearch.moves import (
 NULL = np.iinfo(np.uint8).max
 
 
+def add_edge_exchanges_for_edge(heap, D, sol, i):
+    n = len(sol)
+    for j in range(n):
+        if abs(i - j) < 2:
+            continue
+
+        delta = intra_edge_exchange_delta(D, sol, i, j)
+        if delta >= 0:
+            continue
+
+        a = sol[i]
+        b = sol[j]
+        a_next = sol[(i + 1) % n]
+        b_next = sol[(j + 1) % n]
+        heapq.heappush(heap, (delta, ("intra_edge", a, a_next, b, b_next)))
+
+
+def add_node_exchanges_for_node(heap, D, sol, unselected, i):
+    for k in range(len(unselected)):
+        delta = inter_node_exchange_delta(D, sol, i, unselected, k)
+        if delta < 0:
+            a = sol[i]
+            n = len(sol)
+            a_next = sol[(i + 1) % n]
+            a_prev = sol[i - 1]
+            heapq.heappush(
+                heap, (delta, ("inter_node", a_prev, a, a_next, unselected[k]))
+            )
+
+
 @njit()
 def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
     num_iterations = 0
@@ -46,7 +76,10 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             # Apply move
             sol[i + 1 : j + 1] = np.flip(sol[i + 1 : j + 1])
 
-            # TODO: Add new moves to the priority queue
+            # Add new moves to the priority queue
+            for x in range(i, j + 1):
+                add_edge_exchanges_for_edge(moves_pq, D, sol, x)
+
         else:
             a_prev, a, a_next, node = move[1:]
             if E[a_prev, a] == NULL or E[a, a_next] == NULL or U[node] == NULL:
@@ -59,12 +92,15 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             # update edge matrix and unselected map
             E[a_prev, a] = NULL
             E[a, a_next] = NULL
-            E[a_prev, node] = i
-            E[a_next, node] = i
+            E[a_prev, node] = i - 1
+            E[node, a_next] = i
             U[node] = NULL
             U[a] = k
 
-            # TODO: Add new moves to the priority queue
+            add_edge_exchanges_for_edge(moves_pq, D, sol, i - 1)
+            add_edge_exchanges_for_edge(moves_pq, D, sol, i)
+            add_node_exchanges_for_node(moves_pq, D, sol, unselected, i)
+    return sol, num_iterations
 
 
 def evaluate_all_moves(sol, unselected, D):
@@ -74,12 +110,16 @@ def evaluate_all_moves(sol, unselected, D):
 
     # Intra-route edge exchange:
     for i in range(n):
-        for j in range(i + 2, n):
+        for j in range(n):
+            if abs(i - j) < 2:
+                continue
             delta = intra_edge_exchange_delta(D, sol, i, j)
-            if delta < 0:
-                a, b = sol[i], sol[j]
-                a_next, b_next = sol[(i + 1) % n], sol[(j + 1) % n]
-                all_moves.append((delta, ("intra_edge", a, a_next, b, b_next)))
+            if delta >= 0:
+                continue
+
+            a, b = sol[i], sol[j]
+            a_next, b_next = sol[(i + 1) % n], sol[(j + 1) % n]
+            all_moves.append((delta, ("intra_edge", a, a_next, b, b_next)))
 
     # Inter-route node exchange:
     for i in range(n):
