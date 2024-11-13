@@ -1,14 +1,14 @@
 import numpy as np
+from numba import njit
 
 from tsp.localsearch.moves import (
-    intra_node_exchange_delta,
-    inter_node_exchange_delta,
-    Move,
-    intra_edge_exchange_delta,
-    apply_move,
     IntraType,
+    Move,
+    apply_move,
+    inter_node_exchange_delta,
+    intra_edge_exchange_delta,
+    intra_node_exchange_delta,
 )
-from numba import njit
 
 
 @njit()

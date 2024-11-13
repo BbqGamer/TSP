@@ -3,7 +3,11 @@ from typing import Literal
 import numpy as np
 from numba import njit
 
-from tsp.localsearch.descent import IntraType, greedy_descent, steepest_descent
+from tsp.localsearch.descent import (
+    IntraType,
+    greedy_descent,
+    steepest_descent,
+)
 
 LocalSearchMethod = Literal["steepest", "greedy"]
 
@@ -39,13 +43,3 @@ def random_starting(n, sol_size) -> tuple[np.ndarray, np.ndarray]:
     selected = points[:sol_size]
     unselected = points[sol_size:]
     return selected, unselected
-
-
-@njit()
-def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
-    num_iterations = 0
-    while True:
-        improved = steepest_descent_lazy(sol, unselected, D)
-        num_iterations += 1
-        if not improved:
-            return sol, num_iterations

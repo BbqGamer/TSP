@@ -4,3 +4,4 @@ results
 *.nbi
 venv
 .venv
+.vscode
