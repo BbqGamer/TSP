@@ -15,21 +15,27 @@ NULL = np.iinfo(np.uint8).max
 def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
     num_iterations = 0
 
-    unselected_map = array_map(unselected, len(D))
-    solution_matrix = get_edge_matrix(sol, len(D))
+    U = array_map(unselected, len(D))
+    E = get_edge_matrix(sol, len(D))
 
     # first iteration - evaluate all moves
     moves_pq = evaluate_all_moves(sol, unselected, D)
     while moves_pq:
         num_iterations += 1
-        delta, (move_type, i, a, j, b) = heapq.heappop(moves_pq)
+        delta, move = heapq.heappop(moves_pq)
+        move_type = move[0]
         if move_type == "intra_edge":
-            # check if applicable
-            pass
-            # apply intra-route edge exchange
+            a, a_next, b, b_next = move[1:]
+            if E[a, a_next] == NULL or E[b, b_next] == NULL:
+                continue  # not applicable, we cannot remove inexistent edges
+
+            # TODO: apply intra-route edge exchange
         else:
-            pass
-            # apply inter-route node exchange
+            a_prev, a, a_next, node = move[1:]
+            if E[a_prev, a] == NULL or E[a, a_next] == NULL or U[node] == NULL:
+                continue  # not applicable
+
+            # TODO: apply inter-route node exchange
 
 
 def evaluate_all_moves(sol, unselected, D):
