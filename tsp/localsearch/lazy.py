@@ -15,7 +15,7 @@ NULL = np.iinfo(np.uint8).max
 def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
     num_iterations = 0
 
-    unselected_map = hashmap_array(unselected, len(D))
+    unselected_map = array_map(unselected, len(D))
     solution_matrix = get_edge_matrix(sol, len(D))
 
     # first iteration - evaluate all moves
@@ -44,14 +44,19 @@ def evaluate_all_moves(sol, unselected, D):
             if delta < 0:
                 a, b = sol[i], sol[j]
                 a_next, b_next = sol[(i + 1) % n], sol[(j + 1) % n]
-                all_moves.append((delta, ("intra_edge", (a, a_next), (b, b_next))))
+                all_moves.append((delta, ("intra_edge", a, a_next, b, b_next)))
 
     # Inter-route node exchange:
     for i in range(n):
         for k in range(len(unselected)):
             delta = inter_node_exchange_delta(D, sol, i, unselected, k)
             if delta < 0:
-                all_moves.append((delta, ("inter_node", i, sol[i], k, unselected[k])))
+                a = sol[i]
+                a_next = sol[(i + 1) % n]
+                a_prev = sol[i - 1]
+                all_moves.append(
+                    (delta, ("inter_node", a_prev, a, a_next, unselected[k]))
+                )
 
     heapq.heapify(all_moves)
     return all_moves
@@ -66,8 +71,8 @@ def get_edge_matrix(sol, size):
 
 
 @njit()
-def hashmap_array(array, size):
-    res = np.zeros(size, dtype=np.bool)
-    for k in array:
-        res[k] = 1
+def array_map(array, size):
+    res = -np.ones(size, dtype=np.uint8)
+    for i, k in enumerate(array):
+        res[k] = i
     return res

@@ -1,6 +1,6 @@
 import numpy as np
 
-from tsp.localsearch.lazy import NULL, get_edge_matrix, hashmap_array
+from tsp.localsearch.lazy import NULL, array_map, get_edge_matrix
 
 
 def test_get_edge_matrix():
@@ -19,7 +19,7 @@ def test_get_edge_matrix():
     )
 
 
-def test_hashmap_array():
+def test_array_map():
     unselected = np.array([2, 5, 1])
-    res = hashmap_array(unselected, 6)
-    assert np.all(res == np.array([0, 1, 1, 0, 0, 1]))
+    res = array_map(unselected, 6)
+    assert np.all(res == np.array([NULL, 2, 0, NULL, NULL, 1]))
