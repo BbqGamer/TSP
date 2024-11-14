@@ -178,7 +178,6 @@ if __name__ == "__main__":
     instance = TSP.from_csv("data/TSPA.csv")
     for _ in range(10):
         sol, unselected = random_starting(len(instance), len(instance) - 1)
-        instance.visualize(sol)
 
         asol, num_iterations = local_search_steepest(
             sol.copy(), unselected.copy(), instance.D, "intra_edge"

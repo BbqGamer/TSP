@@ -4,11 +4,13 @@ import time
 import numpy as np
 from numba import njit, objmode
 
+import tsp
 from tsp import TSP, score
 from tsp.localsearch import (
     local_search_steepest,
     random_starting,
 )
+from tsp.localsearch.lazy import local_search_steepest_lazy
 
 
 @njit(cache=True)
@@ -47,6 +49,13 @@ def random_start_greedy_experiment(n, sol_size, D, lazy=False):
 
 
 if __name__ == "__main__":
+    # To jit compile the functions
+    mini = tsp.TSP.from_csv("data/mini.csv")
+    start_sol, unselected = random_starting(len(mini), mini.solution_size)
+    local_search_steepest_lazy(start_sol, unselected, mini.D)
+    start_sol, unselected = random_starting(len(mini), mini.solution_size)
+    local_search_steepest(start_sol, unselected, mini.D, "intra_edge")
+
     with open("results/assignment3.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(["problem", "method", "i", "score", "time", "iter"])
@@ -66,4 +75,5 @@ if __name__ == "__main__":
                     f"results/assignment3-plot-{prob}{'-lazy' if lazy else ''}.png"
                 )
                 problem.visualize(best_sol, title, plotfile)
-                print(f" - {sum(times) / len(times) * 1000} ms")
+                print(f" - average time:  {sum(times) / len(times) * 1000} ms")
+                print(f" - average score: {sum(scores) / len(scores)}")
