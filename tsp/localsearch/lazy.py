@@ -23,15 +23,19 @@ def add_edge_exchanges_for_edge(heap, D, sol, i):
         if abs(i - j) < 2:
             continue
 
-        delta = intra_edge_exchange_delta(D, sol, i, j)
-        if delta >= 0:
-            continue
-
         a = sol[i]
         b = sol[j]
         a_next = sol[(i + 1) % n]
         b_next = sol[(j + 1) % n]
-        heapq.heappush(heap, (delta, (EDGE, a, a_next, b, b_next)))
+
+        delta = intra_edge_exchange_delta(D, sol, i, j)
+        if delta < 0:
+            heapq.heappush(heap, (delta, (EDGE, a, a_next, b, b_next)))
+
+        # Reversed direction
+        delta = intra_edge_exchange_delta(D, sol, j, i)
+        if delta < 0:
+            heapq.heappush(heap, (delta, (EDGE, b, b_next, a, a_next)))
 
 
 @njit()
@@ -102,6 +106,7 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             # Add new moves to the priority queue
             for x in range(i, j + 1):
                 add_edge_exchanges_for_edge(moves_pq, D, sol, x)
+                add_node_exchanges_for_node_from_sol(moves_pq, D, sol, unselected, x)
 
         else:
             a_prev, a, a_next, node = move[1:]
