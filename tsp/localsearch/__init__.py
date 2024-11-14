@@ -12,6 +12,7 @@ from tsp.localsearch.descent import (
 LocalSearchMethod = Literal["steepest", "greedy"]
 
 
+@njit()
 def local_search_steepest(
     sol, unselected, D, intra_move: IntraType
 ) -> tuple[np.ndarray, int]:
