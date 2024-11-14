@@ -11,7 +11,6 @@ from tsp.localsearch.moves import (
 )
 
 
-@njit()
 def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
     """Takes one step of steepest descent using inter-route node exchange
     and for intra-route it uses node exchange or edge exchange
@@ -35,10 +34,11 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
         for i in range(n):
             for j in range(n):
                 if abs(i - j) < 2:
-                    delta = intra_edge_exchange_delta(D, sol, i, j)
-                    if delta < best_delta:
-                        best_delta = delta
-                        best_move = ("intra_edge", i, j)
+                    continue
+                delta = intra_edge_exchange_delta(D, sol, i, j)
+                if delta < best_delta:
+                    best_delta = delta
+                    best_move = ("intra_edge", i, j)
 
     # Inter-route node exchange:
     for i in range(n):

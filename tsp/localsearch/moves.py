@@ -1,7 +1,7 @@
-import numpy as np
 from typing import Literal
-from numba import njit
 
+import numpy as np
+from numba import njit
 
 Move = tuple[Literal["intra_node", "intra_edge", "inter_node"], int, int]
 IntraType = Literal["intra_node", "intra_edge"]
@@ -29,11 +29,25 @@ def intra_node_exchange_delta(D, sol, i, j):
 
     if (i + 1) % n == j:
         # Adjacent nodes swapping
-        return D[a_prev, b] + D[b, a] + D[a, b_next] \
-            - D[a_prev, a] - D[a, b] - D[b, b_next]
+        return (
+            D[a_prev, b]
+            + D[b, a]
+            + D[a, b_next]
+            - D[a_prev, a]
+            - D[a, b]
+            - D[b, b_next]
+        )
 
-    return D[a_prev, b] + D[b, a_next] + D[b_prev, a] + D[a, b_next] \
-        - D[a_prev, a] - D[a, a_next] - D[b_prev, b] - D[b, b_next]
+    return (
+        D[a_prev, b]
+        + D[b, a_next]
+        + D[b_prev, a]
+        + D[a, b_next]
+        - D[a_prev, a]
+        - D[a, a_next]
+        - D[b_prev, b]
+        - D[b, b_next]
+    )
 
 
 @njit()
@@ -41,9 +55,12 @@ def intra_edge_exchange(sol, i, j):
     n = len(sol)
     if j < i:
         j += n
-    rolled_arr = np.roll(sol, -i)
-    rolled_arr[:j - i + 1] = rolled_arr[:j - i + 1][::-1]
-    return np.roll(rolled_arr, i)
+
+    rolled_indices = np.roll(np.arange(n), -i)
+
+    segment_indices = rolled_indices[1 : j - i + 1]
+    sol[segment_indices] = sol[segment_indices][::-1]
+
 
 @njit()
 def intra_edge_exchange_delta(D, sol, i, j):
@@ -54,8 +71,7 @@ def intra_edge_exchange_delta(D, sol, i, j):
     a_next = sol[(i + 1) % n]
     b_next = sol[(j + 1) % n]
 
-    return D[b_next, a_next] + D[a, b] \
-        - D[a, a_next] - D[b_next, b]
+    return D[b_next, a_next] + D[a, b] - D[a, a_next] - D[b_next, b]
 
 
 @njit()
@@ -70,8 +86,7 @@ def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     a_prev = sol[i - 1]
     a_next = sol[(i + 1) % len(sol)]
     node = unselected_nodes[k]
-    return D[a_prev, node] + D[node, a_next] \
-        - D[a_prev, a] - D[a, a_next]
+    return D[a_prev, node] + D[node, a_next] - D[a_prev, a] - D[a, a_next]
 
 
 @njit()

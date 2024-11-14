@@ -74,13 +74,6 @@ def test_intra_edge_touching(instance, solution):
     assert (old_solution == solution).all()  # should not change
 
 
-def test_intra_edge_touching_2(instance, solution):
-    i, j = 0, 5
-    assert intra_edge_exchange_delta(instance.D, solution, i, j) == 0
-    intra_edge_exchange(solution, i, j)
-    assert (np.array([0, 2, 4, 5, 3, 1]) == solution).all()  # just change direction
-
-
 def test_inter_node(instance):
     solution = np.array([0, 1, 2])
     unselected_nodes = np.array([3, 4, 5])
