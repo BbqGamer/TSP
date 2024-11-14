@@ -37,7 +37,9 @@ def local_search_greedy(
 
 
 @njit()
-def random_starting(n, sol_size) -> tuple[np.ndarray, np.ndarray]:
+def random_starting(n, sol_size, seed) -> tuple[np.ndarray, np.ndarray]:
+    if seed is not None:
+        np.random.seed(seed)
     points = np.arange(0, n)
     np.random.shuffle(points)
     selected = points[:sol_size]

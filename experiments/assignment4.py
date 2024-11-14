@@ -23,7 +23,7 @@ def random_start_greedy_experiment(n, sol_size, D, lazy=False):
     best_sc = float("inf")
     best_sol = None
     for i in range(200):
-        start_sol, unselected = random_starting(n, sol_size)
+        start_sol, unselected = random_starting(n, sol_size, None)
 
         with objmode(start="f8"):
             start = time.perf_counter()
@@ -51,9 +51,9 @@ def random_start_greedy_experiment(n, sol_size, D, lazy=False):
 if __name__ == "__main__":
     # To jit compile the functions
     mini = tsp.TSP.from_csv("data/mini.csv")
-    start_sol, unselected = random_starting(len(mini), mini.solution_size)
+    start_sol, unselected = random_starting(len(mini), mini.solution_size, 0)
     local_search_steepest_lazy(start_sol, unselected, mini.D)
-    start_sol, unselected = random_starting(len(mini), mini.solution_size)
+    start_sol, unselected = random_starting(len(mini), mini.solution_size, 0)
     local_search_steepest(start_sol, unselected, mini.D, "intra_edge")
 
     with open("results/assignment3.csv", "w") as f:

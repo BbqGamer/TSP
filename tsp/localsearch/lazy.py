@@ -1,4 +1,5 @@
 import heapq
+import sys
 
 import numpy as np
 from numba import njit
@@ -34,8 +35,20 @@ def add_edge_exchanges_for_edge(heap, D, sol, i):
 
 
 @njit()
-def add_node_exchanges_for_node(heap, D, sol, unselected, i):
+def add_node_exchanges_for_node_from_sol(heap, D, sol, unselected, i):
     for k in range(len(unselected)):
+        delta = inter_node_exchange_delta(D, sol, i, unselected, k)
+        if delta < 0:
+            a = sol[i]
+            n = len(sol)
+            a_next = sol[(i + 1) % n]
+            a_prev = sol[i - 1]
+            heapq.heappush(heap, (delta, (NODE, a_prev, a, a_next, unselected[k])))
+
+
+@njit()
+def add_node_exchanges_for_node_from_unselected(heap, D, sol, unselected, k):
+    for i in range(len(sol)):
         delta = inter_node_exchange_delta(D, sol, i, unselected, k)
         if delta < 0:
             a = sol[i]
@@ -109,7 +122,8 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
 
             add_edge_exchanges_for_edge(moves_pq, D, sol, (i - 1) % len(sol))
             add_edge_exchanges_for_edge(moves_pq, D, sol, i)
-            add_node_exchanges_for_node(moves_pq, D, sol, unselected, i)
+            add_node_exchanges_for_node_from_sol(moves_pq, D, sol, unselected, i)
+            add_node_exchanges_for_node_from_unselected(moves_pq, D, sol, unselected, k)
 
         # Sanity check
         for i, node in enumerate(sol):
@@ -173,16 +187,16 @@ def array_map(array, size):
 
 if __name__ == "__main__":
     from tsp import TSP
-    from tsp.localsearch import local_search_steepest
 
     instance = TSP.from_csv("data/TSPA.csv")
-    for _ in range(10):
-        sol, unselected = random_starting(len(instance), len(instance) - 1)
+    sol, unselected = random_starting(len(instance), len(instance) - 1, seed=42)
+    if len(sys.argv) == 2 and sys.argv[1] == "lazy":
+        sol, num_iterations = local_search_steepest_lazy(sol, unselected, instance.D)
+        instance.visualize(sol)
+    else:
+        from tsp.localsearch import local_search_steepest
 
         asol, num_iterations = local_search_steepest(
             sol.copy(), unselected.copy(), instance.D, "intra_edge"
         )
         instance.visualize(asol)
-
-        sol, num_iterations = local_search_steepest_lazy(sol, unselected, instance.D)
-        instance.visualize(sol)
