@@ -33,11 +33,12 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
     else:
         # Intra-route edge exchange:
         for i in range(n):
-            for j in range(i + 2, n):
-                delta = intra_edge_exchange_delta(D, sol, i, j)
-                if delta < best_delta:
-                    best_delta = delta
-                    best_move = ("intra_edge", i, j)
+            for j in range(n):
+                if abs(i - j) < 2:
+                    delta = intra_edge_exchange_delta(D, sol, i, j)
+                    if delta < best_delta:
+                        best_delta = delta
+                        best_move = ("intra_edge", i, j)
 
     # Inter-route node exchange:
     for i in range(n):

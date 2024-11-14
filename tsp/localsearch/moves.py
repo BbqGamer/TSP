@@ -38,8 +38,12 @@ def intra_node_exchange_delta(D, sol, i, j):
 
 @njit()
 def intra_edge_exchange(sol, i, j):
-    sol[i+1:j+1] = np.flip(sol[i+1:j+1])
-
+    n = len(sol)
+    if j < i:
+        j += n
+    rolled_arr = np.roll(sol, -i)
+    rolled_arr[:j - i + 1] = rolled_arr[:j - i + 1][::-1]
+    return np.roll(rolled_arr, i)
 
 @njit()
 def intra_edge_exchange_delta(D, sol, i, j):

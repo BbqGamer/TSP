@@ -10,7 +10,11 @@ from tsp.localsearch.moves import (
 
 NULL = np.iinfo(np.uint8).max
 
+NODE = 0
+EDGE = 1
 
+
+@njit()
 def add_edge_exchanges_for_edge(heap, D, sol, i):
     n = len(sol)
     for j in range(n):
@@ -25,9 +29,10 @@ def add_edge_exchanges_for_edge(heap, D, sol, i):
         b = sol[j]
         a_next = sol[(i + 1) % n]
         b_next = sol[(j + 1) % n]
-        heapq.heappush(heap, (delta, ("intra_edge", a, a_next, b, b_next)))
+        heapq.heappush(heap, (delta, (EDGE, a, a_next, b, b_next)))
 
 
+@njit()
 def add_node_exchanges_for_node(heap, D, sol, unselected, i):
     for k in range(len(unselected)):
         delta = inter_node_exchange_delta(D, sol, i, unselected, k)
@@ -36,12 +41,9 @@ def add_node_exchanges_for_node(heap, D, sol, unselected, i):
             n = len(sol)
             a_next = sol[(i + 1) % n]
             a_prev = sol[i - 1]
-            heapq.heappush(
-                heap, (delta, ("inter_node", a_prev, a, a_next, unselected[k]))
-            )
+            heapq.heappush(heap, (delta, (NODE, a_prev, a, a_next, unselected[k])))
 
 
-@njit()
 def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
     num_iterations = 0
 
@@ -54,7 +56,7 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
         num_iterations += 1
         delta, move = heapq.heappop(moves_pq)
         move_type = move[0]
-        if move_type == "intra_edge":
+        if move_type == EDGE:
             a, a_next, b, b_next = move[1:]
             if E[a, a_next] == NULL or E[b, b_next] == NULL:
                 continue  # not applicable, we cannot remove inexistent edges
@@ -68,13 +70,19 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             E[a_next, b_next] = j
 
             # Reverse the edges between the two nodes
-            for x in range(j - i - 1):
-                left, right = sol[i + x + 1], sol[i + x + 2]
-                E[left, right] = NULL
-                E[right, left] = j - x - 1
+            xj, xi = j, i
+            n = len(sol)
+            if xj < xi:
+                xj += n
+            rolled_arr = np.roll(sol, -xi)
+            rolled_arr[: xj - xi + 1] = rolled_arr[: xj - xi + 1][::-1]
 
-            # Apply move
-            sol[i + 1 : j + 1] = np.flip(sol[i + 1 : j + 1])
+            for x in range(1, xj - xi):
+                left, right = rolled_arr[x], sol[x + 1]
+                E[left, right] = NULL
+                E[right, left] = (j - x) % n
+
+            sol = np.roll(rolled_arr, xi)
 
             # Add new moves to the priority queue
             for x in range(i, j + 1):
@@ -92,7 +100,7 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             # update edge matrix and unselected map
             E[a_prev, a] = NULL
             E[a, a_next] = NULL
-            E[a_prev, node] = i - 1
+            E[a_prev, node] = (i - 1) % len(sol)
             E[node, a_next] = i
             U[node] = NULL
             U[a] = k
@@ -100,9 +108,20 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             add_edge_exchanges_for_edge(moves_pq, D, sol, i - 1)
             add_edge_exchanges_for_edge(moves_pq, D, sol, i)
             add_node_exchanges_for_node(moves_pq, D, sol, unselected, i)
+
+        # Sanity check
+        for i, node in enumerate(sol):
+            assert U[node] == NULL
+            print(i)
+            assert E[node, sol[(i + 1) % len(sol)]] == i
+
+        for i, node in enumerate(unselected):
+            assert U[node] == i
+
     return sol, num_iterations
 
 
+@njit()
 def evaluate_all_moves(sol, unselected, D):
     """Evaluates all possible improving moves and returns a priority queue of moves"""
     all_moves = []
@@ -119,7 +138,7 @@ def evaluate_all_moves(sol, unselected, D):
 
             a, b = sol[i], sol[j]
             a_next, b_next = sol[(i + 1) % n], sol[(j + 1) % n]
-            all_moves.append((delta, ("intra_edge", a, a_next, b, b_next)))
+            all_moves.append((delta, (EDGE, a, a_next, b, b_next)))
 
     # Inter-route node exchange:
     for i in range(n):
@@ -129,9 +148,7 @@ def evaluate_all_moves(sol, unselected, D):
                 a = sol[i]
                 a_next = sol[(i + 1) % n]
                 a_prev = sol[i - 1]
-                all_moves.append(
-                    (delta, ("inter_node", a_prev, a, a_next, unselected[k]))
-                )
+                all_moves.append((delta, (NODE, a_prev, a, a_next, unselected[k])))
 
     heapq.heapify(all_moves)
     return all_moves
@@ -151,3 +168,22 @@ def array_map(array, size):
     for i, k in enumerate(array):
         res[k] = i
     return res
+
+
+if __name__ == "__main__":
+    from tsp import TSP
+    from tsp.localsearch import local_search_steepest, random_starting
+
+    instance = TSP.from_csv("data/mini.csv")
+    sol, unselected = random_starting(len(instance), len(instance) - 1)
+    instance.visualize(sol)
+
+    asol, num_iterations = local_search_steepest(
+        sol.copy(), unselected.copy(), instance.D, "intra_edge"
+    )
+    instance.visualize(asol)
+    print(sol, instance.score(asol), num_iterations)
+
+    sol, num_iterations = local_search_steepest_lazy(sol, unselected, instance.D)
+    instance.visualize(sol)
+    print(sol, instance.score(sol), num_iterations)

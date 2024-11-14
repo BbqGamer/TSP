@@ -46,6 +46,11 @@ class TSP:
             )  # Highlight the path
             title += f" (score: {score})"
 
+            for i, (xi, yi) in enumerate(self._points):
+                plt.text(
+                    xi - 0.2, yi - 0.1, str(i), fontsize=10, ha="center", va="center"
+                )
+
         plt.title(title)
 
         if outfilename:
