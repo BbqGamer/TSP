@@ -112,6 +112,7 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             )
 
         else:
+            n = len(sol)
             a_prev, a, a_next, node = move[1:]
             if E[a_prev, a] == NULL or E[a, a_next] == NULL or U[node] == NULL:
                 continue  # not applicable
@@ -130,7 +131,15 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
 
             add_edge_exchanges_for_edge(moves_pq, D, sol, (i - 1) % len(sol))
             add_edge_exchanges_for_edge(moves_pq, D, sol, i)
+
+            add_node_exchanges_for_node_from_sol(
+                moves_pq, D, sol, unselected, (i - 1) % n
+            )
             add_node_exchanges_for_node_from_sol(moves_pq, D, sol, unselected, i)
+            add_node_exchanges_for_node_from_sol(
+                moves_pq, D, sol, unselected, (i + 1) % n
+            )
+
             add_node_exchanges_for_node_from_unselected(moves_pq, D, sol, unselected, k)
 
         # Sanity check
