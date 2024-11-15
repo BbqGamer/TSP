@@ -107,6 +107,9 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
             for x in range(i, j + 1):
                 add_edge_exchanges_for_edge(moves_pq, D, sol, x)
                 add_node_exchanges_for_node_from_sol(moves_pq, D, sol, unselected, x)
+            add_node_exchanges_for_node_from_sol(
+                moves_pq, D, sol, unselected, (j + 1) % n
+            )
 
         else:
             a_prev, a, a_next, node = move[1:]

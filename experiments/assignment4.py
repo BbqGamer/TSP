@@ -13,9 +13,10 @@ from tsp.localsearch import (
 from tsp.localsearch.lazy import local_search_steepest_lazy
 
 
-@njit(cache=True)
-def random_start_greedy_experiment(n, sol_size, D, lazy=False):
-    np.random.seed(42)
+@njit()
+def random_start_greedy_experiment(n, sol_size, D, lazy=False, seed=None):
+    if seed:
+        np.random.seed(42)
 
     scores = []
     times = []

@@ -19,7 +19,7 @@ class TSP:
         data = np.genfromtxt(filename, delimiter=";")
         return cls(data[:, :2], data[:, 2])
 
-    def visualize(self, solution=None, title="TSP", outfilename=""):
+    def visualize(self, solution=None, title="TSP", outfilename="", labels=False):
         plt.clf()
         x = self._points[:, 0]
         y = self._points[:, 1]
@@ -46,15 +46,16 @@ class TSP:
             )  # Highlight the path
             title += f" (score: {score})"
 
-            for i, (xi, yi) in enumerate(self._points):
-                plt.text(
-                    xi - 0.2, yi - 0.1, str(i), fontsize=10, ha="center", va="center"
-                )
+            if labels:
+                for i, (xi, yi) in enumerate(self._points):
+                    plt.text(
+                        xi - 1, yi - 1, str(i), fontsize=6, ha="center", va="center"
+                    )
 
         plt.title(title)
 
         if outfilename:
-            plt.savefig(outfilename, dpi=500)
+            plt.savefig(outfilename, dpi=1000)
         else:
             plt.show()
 
