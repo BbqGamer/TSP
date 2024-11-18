@@ -12,11 +12,13 @@ from tsp.localsearch.moves import (
 
 
 @njit()
-def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
+def steepest_descent(sol, unselected, D, intra_move: IntraType) -> tuple[bool, int]:
     """Takes one step of steepest descent using inter-route node exchange
     and for intra-route it uses node exchange or edge exchange
     Returns: True if objective function improved and False otherwise
         function changes sol and unselected"""
+    delta_evaluations = 0
+
     n = len(sol)
     improved = False
     best_delta = 0.0
@@ -27,6 +29,7 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
         for i in range(n):
             for j in range(i + 1, n):
                 delta = intra_node_exchange_delta(D, sol, i, j)
+                delta_evaluations += 1
                 if delta < best_delta:
                     best_delta = delta
                     best_move = ("intra_node", i, j)
@@ -37,6 +40,7 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
                 if abs(i - j) < 2:
                     continue
                 delta = intra_edge_exchange_delta(D, sol, i, j)
+                delta_evaluations += 1
                 if delta < best_delta:
                     best_delta = delta
                     best_move = ("intra_edge", i, j)
@@ -46,13 +50,14 @@ def steepest_descent(sol, unselected, D, intra_move: IntraType) -> bool:
         for k in range(len(unselected)):
             delta = inter_node_exchange_delta(D, sol, i, unselected, k)
             if delta < best_delta:
+                delta_evaluations += 1
                 best_delta = delta
                 best_move = ("inter_node", i, k)
 
     if best_move is not None:
         apply_move(sol, unselected, best_move)
         improved = True
-    return improved
+    return improved, delta_evaluations
 
 
 @njit()

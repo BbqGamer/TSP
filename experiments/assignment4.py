@@ -21,6 +21,7 @@ def random_start_greedy_experiment(n, sol_size, D, lazy=False, seed=None):
     scores = []
     times = []
     iters = []
+    delta_evals = []
     best_sc = float("inf")
     best_sol = None
     for i in range(200):
@@ -30,9 +31,9 @@ def random_start_greedy_experiment(n, sol_size, D, lazy=False, seed=None):
             start = time.perf_counter()
 
         if lazy:
-            sol, num_iters = local_search_steepest_lazy(start_sol, unselected, D)
+            sol, num_iters, evals = local_search_steepest_lazy(start_sol, unselected, D)
         else:
-            sol, num_iters = local_search_steepest(
+            sol, num_iters, evals = local_search_steepest(
                 start_sol, unselected, D, "intra_edge"
             )
 
@@ -46,7 +47,8 @@ def random_start_greedy_experiment(n, sol_size, D, lazy=False, seed=None):
         if sc < best_sc:
             best_sc = sc
             best_sol = sol
-    return scores, times, iters, best_sol
+        delta_evals.append(evals)
+    return scores, times, iters, best_sol, delta_evals
 
 
 if __name__ == "__main__":
@@ -59,14 +61,18 @@ if __name__ == "__main__":
 
     with open("results/assignment4.csv", "w") as f:
         writer = csv.writer(f)
-        writer.writerow(["problem", "method", "i", "score", "time", "iter"])
+        writer.writerow(
+            ["problem", "method", "i", "score", "time", "iter", "delta_evals"]
+        )
         for prob in ["TSPA", "TSPB"]:
             problem = TSP.from_csv("data/" + prob + ".csv")
             print(f"--- {prob} ---")
             for lazy in [True, False]:
                 print("Lazy evaluation steepest" if lazy else "Regular steepest")
-                scores, times, iters, best_sol = random_start_greedy_experiment(
-                    len(problem), problem.solution_size, problem.D, lazy
+                scores, times, iters, best_sol, delta_evals = (
+                    random_start_greedy_experiment(
+                        len(problem), problem.solution_size, problem.D, lazy
+                    )
                 )
 
                 title = f"{prob} - Steepest localsearch"
@@ -78,6 +84,9 @@ if __name__ == "__main__":
                 problem.visualize(best_sol, title, plotfile)
                 print(f" - average time:  {sum(times) / len(times) * 1000} ms")
                 print(f" - average score: {sum(scores) / len(scores)}")
+                print(
+                    f" - average number of evaluations: {sum(delta_evals) / len(delta_evals)}"
+                )
                 for i in range(len(scores)):
                     writer.writerow(
                         [
@@ -87,5 +96,6 @@ if __name__ == "__main__":
                             scores[i],
                             times[i],
                             iters[i],
+                            delta_evals[i],
                         ]
                     )

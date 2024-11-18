@@ -15,13 +15,15 @@ LocalSearchMethod = Literal["steepest", "greedy"]
 @njit()
 def local_search_steepest(
     sol, unselected, D, intra_move: IntraType
-) -> tuple[np.ndarray, int]:
+) -> tuple[np.ndarray, int, int]:
     num_iterations = 0
+    delta_evaluations = 0
     while True:
-        improved = steepest_descent(sol, unselected, D, intra_move)
+        improved, delta_evals = steepest_descent(sol, unselected, D, intra_move)
+        delta_evaluations += delta_evals
         num_iterations += 1
         if not improved:
-            return sol, num_iterations
+            return sol, num_iterations, delta_evaluations
 
 
 @njit()
