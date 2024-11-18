@@ -142,14 +142,6 @@ def local_search_steepest_lazy(sol, unselected, D) -> tuple[np.ndarray, int]:
 
             add_node_exchanges_for_node_from_unselected(moves_pq, D, sol, unselected, k)
 
-        # Sanity check
-        for i, node in enumerate(sol):
-            assert U[node] == NULL
-            assert E[node, sol[(i + 1) % len(sol)]] == i
-
-        for i, node in enumerate(unselected):
-            assert U[node] == i
-
     return sol, num_iterations
 
 

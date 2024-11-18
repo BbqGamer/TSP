@@ -57,7 +57,7 @@ if __name__ == "__main__":
     start_sol, unselected = random_starting(len(mini), mini.solution_size, 0)
     local_search_steepest(start_sol, unselected, mini.D, "intra_edge")
 
-    with open("results/assignment3.csv", "w") as f:
+    with open("results/assignment4.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(["problem", "method", "i", "score", "time", "iter"])
         for prob in ["TSPA", "TSPB"]:
@@ -78,3 +78,14 @@ if __name__ == "__main__":
                 problem.visualize(best_sol, title, plotfile)
                 print(f" - average time:  {sum(times) / len(times) * 1000} ms")
                 print(f" - average score: {sum(scores) / len(scores)}")
+                for i in range(len(scores)):
+                    writer.writerow(
+                        [
+                            prob,
+                            "lazy" if lazy else "steepest",
+                            i,
+                            scores[i],
+                            times[i],
+                            iters[i],
+                        ]
+                    )
