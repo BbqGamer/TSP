@@ -67,12 +67,12 @@ def inter_node_candidate_edge_exchange_delta_next(D, sol, i, unselected_nodes, k
     return D[a, node] + D[node, a_next_next] - D[a, a_next] - D[a_next, a_next_next]
 
 
-@njit()
+@njit(cache=False)
 def intra_node_exchange(sol, i, j):
     sol[i], sol[j] = sol[j], sol[i]
 
 
-@njit()
+@njit(cache=False)
 def intra_node_exchange_delta(D, sol, i, j):
     """Calculate change in objective function if you exchange sol[i] and sol[j] nodes"""
     n = len(sol)
@@ -110,12 +110,12 @@ def intra_node_exchange_delta(D, sol, i, j):
     )
 
 
-@njit()
+@njit(cache=False)
 def intra_edge_exchange(sol, i, j):
     sol[i + 1 : j + 1] = np.flip(sol[i + 1 : j + 1])
 
 
-@njit()
+@njit(cache=False)
 def intra_edge_exchange_delta(D, sol, i, j):
     """Calculate change in objective function if you exchange i-th and j-th edges from sol"""
     n = len(sol)
@@ -127,12 +127,12 @@ def intra_edge_exchange_delta(D, sol, i, j):
     return D[b_next, a_next] + D[a, b] - D[a, a_next] - D[b_next, b]
 
 
-@njit()
+@njit(cache=False)
 def inter_node_exchange(sol, i, unselected_nodes, k):
     sol[i], unselected_nodes[k] = unselected_nodes[k], sol[i]
 
 
-@njit()
+@njit(cache=False)
 def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     """Calculate change in objective function if you exchange nodes sol[i] and some node (not in sol)"""
     a = sol[i]
@@ -142,7 +142,7 @@ def inter_node_exchange_delta(D, sol, i, unselected_nodes, k):
     return D[a_prev, node] + D[node, a_next] - D[a_prev, a] - D[a, a_next]
 
 
-@njit()
+@njit(cache=False)
 def apply_move(sol, unselected, best_move):
     move_type, i, j = best_move
     if move_type == "intra_node":
@@ -151,3 +151,25 @@ def apply_move(sol, unselected, best_move):
         intra_edge_exchange(sol, i, j)
     else:
         inter_node_exchange(sol, i, unselected, j)
+
+
+@njit(cache=False)
+def perturb_sol(sol, unselected, intra_move: IntraType, num_continous_nodes_affected):
+    i = np.random.randint(0, 100)
+    for _ in range(num_continous_nodes_affected):
+        j = np.random.randint(0, 100)
+
+        # print(f"Perturbing sol, i={i}, j={j}")
+        # print(f"i-th node: {sol[i]}, j-th node: {unselected[j]}")
+        # print(sol)
+        # print(unselected)
+
+        if intra_move == "inter_node":
+            inter_node_exchange(sol, i, unselected, j)
+        else:
+            intra_edge_exchange(sol, i, j)
+        i = (i + 1) % 100
+
+        # print(f"Perturbed")
+        # print(sol)
+        # print(unselected)
