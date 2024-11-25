@@ -1,7 +1,7 @@
-import numpy as np
 from typing import Literal
-from numba import njit
 
+import numpy as np
+from numba import njit
 
 Move = tuple[Literal["intra_node", "intra_edge", "inter_node"], int, int]
 IntraType = Literal["intra_edge"]
@@ -111,8 +111,20 @@ def intra_node_exchange_delta(D, sol, i, j):
 
 
 @njit(cache=False)
-def intra_edge_exchange(sol, i, j):
+def intra_edge_exchange_2(sol, i, j):
     sol[i + 1 : j + 1] = np.flip(sol[i + 1 : j + 1])
+
+
+@njit()
+def intra_edge_exchange(sol, i, j):
+    n = len(sol)
+    if j < i:
+        j += n
+
+    rolled_indices = np.roll(np.arange(n), -i)
+
+    segment_indices = rolled_indices[1 : j - i + 1]
+    sol[segment_indices] = sol[segment_indices][::-1]
 
 
 @njit(cache=False)

@@ -14,3 +14,8 @@ dependencies = ["matplotlib", "numpy", "numba"]
 packages = [
     { include = "lib" },
 ]
+
+[dependency-groups]
+dev = [
+    "ipython>=8.29.0",
+]

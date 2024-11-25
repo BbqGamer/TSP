@@ -3,3 +3,5 @@ results
 *.nbc
 *.nbi
 venv
+.venv
+.vscode

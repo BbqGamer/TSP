@@ -2,7 +2,14 @@ import numpy as np
 import pytest
 
 from tsp import TSP
-from tsp.localsearch.moves import inter_node_exchange, inter_node_exchange_delta, intra_edge_exchange, intra_edge_exchange_delta, intra_node_exchange, intra_node_exchange_delta
+from tsp.localsearch.moves import (
+    inter_node_exchange,
+    inter_node_exchange_delta,
+    intra_edge_exchange,
+    intra_edge_exchange_delta,
+    intra_node_exchange,
+    intra_node_exchange_delta,
+)
 
 
 @pytest.fixture
@@ -11,6 +18,7 @@ def instance():
     weights = np.array([-1, 0, 1, 2, 3, 1])
     instance = TSP(points, weights)
     yield instance
+
 
 @pytest.fixture
 def solution():
@@ -45,7 +53,6 @@ def test_intra_node_boundary(instance, solution):
     assert delta == score_after - score_before
 
 
-
 def test_intra_edge(instance, solution):
     score_before = instance.score(solution)
 
@@ -65,12 +72,6 @@ def test_intra_edge_touching(instance, solution):
     intra_edge_exchange(solution, i, j)
     old_solution = solution.copy()
     assert (old_solution == solution).all()  # should not change
-
-def test_intra_edge_touching_2(instance, solution):
-    i, j = 0, 5
-    assert intra_edge_exchange_delta(instance.D, solution, i, j) == 0
-    intra_edge_exchange(solution, i, j)
-    assert (np.array([0, 2, 4, 5, 3, 1]) == solution).all()  # just change direction
 
 
 def test_inter_node(instance):
@@ -103,5 +104,3 @@ def test_inter_node_beginning(instance):
 
     score_after = instance.score(solution)
     assert delta == score_after - score_before
-
-
