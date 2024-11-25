@@ -19,7 +19,8 @@ class TSP:
         data = np.genfromtxt(filename, delimiter=";")
         return cls(data[:, :2], data[:, 2])
 
-    def visualize(self, solution=None):
+    def visualize(self, solution=None, title="TSP", outfilename="", labels=False):
+        plt.clf()
         x = self._points[:, 0]
         y = self._points[:, 1]
         scatter = plt.scatter(
@@ -31,8 +32,6 @@ class TSP:
         plt.colorbar(scatter, label="Cost")
         plt.xlabel("X-axis")
         plt.ylabel("Y-axis")
-
-        title = "TSP points to visit with costs"
 
         if solution is not None:
             score = self.score(solution)
@@ -47,8 +46,18 @@ class TSP:
             )  # Highlight the path
             title += f" (score: {score})"
 
+            if labels:
+                for i, (xi, yi) in enumerate(self._points):
+                    plt.text(
+                        xi - 1, yi - 1, str(i), fontsize=6, ha="center", va="center"
+                    )
+
         plt.title(title)
-        plt.show()
+
+        if outfilename:
+            plt.savefig(outfilename, dpi=1000)
+        else:
+            plt.show()
 
     def __len__(self) -> int:
         return len(self._points)
@@ -67,5 +76,5 @@ class TSP:
 def score(solution: np.ndarray, D: np.ndarray):
     total_cost = 0
     for i in range(len(solution)):
-        total_cost += D[solution[i-1], solution[i]]
+        total_cost += D[solution[i - 1], solution[i]]
     return total_cost
