@@ -29,9 +29,8 @@ class RandomSolver(Solver):
 
 @njit()
 def random_solve(D, starting, solution_size):
-    return np.random.choice(
-        len(D), solution_size, replace=False
-    )
+    return np.random.choice(len(D), solution_size, replace=False)
+
 
 @njit()
 def pairwise_circular(lst):
@@ -49,6 +48,7 @@ class NNHead(Solver):
         return solve_nn_first(
             self.problem.D, self.starting_node, self.problem.solution_size
         )
+
 
 @njit()
 def solve_nn_first(D, starting, sol_size):
@@ -73,6 +73,7 @@ class NNWhole(Solver):
         return solve_nn_any(
             self.problem.D.copy(), self.starting_node, self.problem.solution_size
         )
+
 
 @njit()
 def solve_nn_any(D, starting, solution_size):
@@ -103,6 +104,7 @@ class GreedyCycle(Solver):
             self.starting_node,
             self.problem.solution_size,
         )
+
 
 @njit()
 def solve_greedy_cycle(D, starting, solution_size):
@@ -147,8 +149,8 @@ def solve_regret_greedy_cycle(D, starting, solution_size):
             bests = []
             for i, (first, second) in enumerate(pairwise_circular(solution)):
                 delta = D[first, node] + D[node, second] - D[first, second]
-                bests.append((delta,i))
-            if(len(bests)==1):
+                bests.append((delta, i))
+            if len(bests) == 1:
                 best_node = node
             else:
                 bests = sorted(bests, key=lambda x: x[0])
@@ -174,25 +176,33 @@ class WeightedRegretGreedyCycle(Solver):
 
 
 @njit()
-def solve_weighted_regret_greedy_cycle(D, starting, solution_size):
-    solution = [starting]
+def solve_weighted_regret_greedy_cycle(D, starting: int | np.ndarray, solution_size):
     visited = np.zeros(len(D))
-    visited[starting] = 1
 
-    for _ in range(solution_size - 1):
+    if isinstance(starting, np.ndarray):
+        solution = starting.tolist()
+        for node in starting:
+            visited[node] = 1
+    else:
+        solution = [starting]
+        visited[starting] = 1
+
+    toadd = solution_size - len(solution)
+
+    for _ in range(toadd):
         best_i, best_node, best_score = -1, -1, np.inf
         for node in np.where(visited == 0)[0]:
             bests = []
             for i, (first, second) in enumerate(pairwise_circular(solution)):
                 delta = D[first, node] + D[node, second] - D[first, second]
-                bests.append((delta,i))
-            if(len(bests)==1):
+                bests.append((delta, i))
+            if len(bests) == 1:
                 best_node = node
             else:
                 bests = sorted(bests, key=lambda x: x[0])
                 regret = bests[0][0] - bests[1][0]
                 curr_delta = bests[0][0]
-                score = 0.5*regret + 0.5*curr_delta
+                score = 0.5 * regret + 0.5 * curr_delta
                 if score < best_score:
                     best_i, best_node, best_score = bests[0][1], node, score
         solution.insert(best_i + 1, best_node)
