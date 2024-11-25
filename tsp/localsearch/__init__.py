@@ -1,4 +1,5 @@
 import time
+from tsp import TSP, score
 from tsp.localsearch.descent import (
     greedy_descent,
     steepest_descent,
@@ -28,31 +29,50 @@ def local_search_steepest(
 
 @njit(cache=False)
 def u_local_search_steepest(
-    sol, unselected, D, intra_move: IntraType, start, time_limit
+    sol, unselected, D, intra_move: IntraType, start, time_limit, consecutive
 ) -> tuple[np.ndarray, int]:
+    # Initialization
     num_iterations = 0
-
+    inner_counter = 0
     best_sol = sol.copy()
     best_score = np.inf
+    best_sol_unselected = unselected.copy()
 
     with objmode(end="f8"):
         end = time.perf_counter()
+
+    # Main loop
     while (end - start) < time_limit:
+        sol = best_sol.copy()
+        unselected = best_sol_unselected.copy()
         num_iterations += 1
         # print(f"--- Iteration {num_iterations} ---")
         # print((time.perf_counter() - start))
 
-        perturb_sol(sol, unselected, "inter_node", 5)
+        # if num_iterations % 2 == 0:
+        # perturb_sol(sol, unselected, "inter_node", consecutive)
+        # elif num_iterations % 2 == 1:
+        perturb_sol(sol, unselected, "intra_edge", consecutive)
 
         while True:
+            inner_counter += 1
             # print("Improving")
             improved = steepest_descent(sol, unselected, D, intra_move)
             if not improved:
                 break
+
+        # score the solution
+        current_score = score(sol, D)
+        if current_score < best_score:
+            best_score = current_score
+            best_sol = sol.copy()
+            best_sol_unselected = unselected.copy()
+        # print(f"Current score: {current_score}")
+
         with objmode(end="f8"):
             end = time.perf_counter()
 
-    return sol, num_iterations
+    return sol, num_iterations, inner_counter
 
 
 @njit(cache=False)

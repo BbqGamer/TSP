@@ -166,7 +166,7 @@ def perturb_sol(sol, unselected, intra_move: IntraType, num_continous_nodes_affe
 
         if intra_move == "inter_node":
             inter_node_exchange(sol, i, unselected, j)
-        else:
+        elif intra_move == "intra_edge":
             intra_edge_exchange(sol, i, j)
         i = (i + 1) % 100
 
