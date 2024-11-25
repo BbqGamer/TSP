@@ -176,16 +176,15 @@ class WeightedRegretGreedyCycle(Solver):
 
 
 @njit()
-def solve_weighted_regret_greedy_cycle(D, starting: int | np.ndarray, solution_size):
+def solve_weighted_regret_greedy_cycle(D, starting, solution_size):
     visited = np.zeros(len(D))
 
-    if isinstance(starting, np.ndarray):
-        solution = starting.tolist()
-        for node in starting:
-            visited[node] = 1
-    else:
-        solution = [starting]
-        visited[starting] = 1
+    solution = []
+    for node in starting:
+        solution.append(node)
+
+    for node in solution:
+        visited[node] = 1
 
     toadd = solution_size - len(solution)
 

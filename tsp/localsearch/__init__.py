@@ -1,15 +1,16 @@
 import time
-from tsp import TSP, score
-from tsp.localsearch.descent import (
-    greedy_descent,
-    steepest_descent,
-    IntraType,
-    steepest_descent_candidate_edges,
-)
-import numpy as np
 from typing import Literal
+
+import numpy as np
 from numba import njit, objmode
 
+from tsp import score
+from tsp.localsearch.descent import (
+    IntraType,
+    greedy_descent,
+    steepest_descent,
+    steepest_descent_candidate_edges,
+)
 from tsp.localsearch.moves import perturb_sol
 
 LocalSearchMethod = Literal["steepest", "greedy"]
@@ -103,8 +104,11 @@ def local_search_greedy(
 
 
 @njit()
-def random_starting(n, sol_size) -> tuple[np.ndarray, np.ndarray]:
-    np.random.seed(42)
+def random_starting(
+    n, sol_size, seed: int | None = 42
+) -> tuple[np.ndarray, np.ndarray]:
+    if seed is not None:
+        np.random.seed(seed)
     points = np.arange(0, n)
     np.random.shuffle(points)
     selected = points[:sol_size]
