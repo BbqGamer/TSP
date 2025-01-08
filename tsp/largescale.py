@@ -20,7 +20,7 @@ def destroy(sol: np.ndarray, removal_fraction: float = 0.3) -> np.ndarray:
 
 
 @numba.njit()
-def large_scale_neighborhood_search(instance_size, sol_size, D, time_limit):
+def large_scale_neighborhood_search(instance_size, sol_size, D, time_limit, with_ls):
     start_sol, unselected = random_starting(instance_size, sol_size, None)
     sol, _, _ = local_search_steepest(start_sol, unselected, D, "intra_edge")
 
@@ -32,11 +32,12 @@ def large_scale_neighborhood_search(instance_size, sol_size, D, time_limit):
     while (end - start) < time_limit:
         new_sol = destroy(sol)
         new_sol = solve_weighted_regret_greedy_cycle(D, new_sol, sol_size)
-        unselected = []
-        for i in range(instance_size):
-            if i not in new_sol:
-                unselected.append(i)
-        new_sol, _, _ = local_search_steepest(new_sol, unselected, D, "intra_edge")
+        if with_ls:
+            unselected = []
+            for i in range(instance_size):
+                if i not in new_sol:
+                    unselected.append(i)
+            new_sol, _, _ = local_search_steepest(new_sol, unselected, D, "intra_edge")
 
         if score(new_sol, D) < score(sol, D):
             sol = new_sol.copy()

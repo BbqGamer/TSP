@@ -10,6 +10,7 @@ from tsp.largescale import large_scale_neighborhood_search
 def start_experiment(
     problem,
     instance_tsp,
+    with_ls,
 ):
     np.random.seed(42)
 
@@ -32,7 +33,7 @@ def start_experiment(
         start = time.perf_counter()
 
         sol, num_iters = large_scale_neighborhood_search(
-            len(problem), problem.solution_size, problem.D, time_limit
+            len(problem), problem.solution_size, problem.D, time_limit, with_ls
         )
 
         end = time.perf_counter()
@@ -56,21 +57,25 @@ if __name__ == "__main__":
         writer = csv.writer(f)
         writer.writerow(["problem", "method", "i", "score", "time", "iter"])
         for prob in ["TSPA", "TSPB"]:
-            problem = TSP.from_csv("data/" + prob + ".csv")
-            method = "large scale neighborhood search"
-            print(f"--- {prob} ---")
-            scores, times, iters, best_sol = start_experiment(
-                problem,
-                prob,
-            )
+            for with_ls in [True, False]:
+                problem = TSP.from_csv("data/" + prob + ".csv")
+                method = "large neighborhood search"
+                if with_ls:
+                    method += " with local search"
+                print(f"--- {prob} ---")
+                scores, times, iters, best_sol = start_experiment(
+                    problem, prob, with_ls
+                )
 
-            problem.visualize(
-                best_sol,
-                title=f"{prob} {method}",
-                outfilename=f"results/{prob}_{method}.png",
-            )
-            print(best_sol)
+                problem.visualize(
+                    best_sol,
+                    title=f"{prob} {method}",
+                    outfilename=f"results/{prob}_{method}.png",
+                )
+                print(best_sol)
 
-            print(f" - {sum(times) / len(times) * 1000} ms")
-            for i in range(len(scores)):
-                writer.writerow([prob, method, i, int(scores[i]), times[i], iters[i]])
+                print(f" - {sum(times) / len(times) * 1000} ms")
+                for i in range(len(scores)):
+                    writer.writerow(
+                        [prob, method, i, int(scores[i]), times[i], iters[i]]
+                    )
