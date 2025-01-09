@@ -8,9 +8,9 @@ import tsp
 from tsp import TSP, score
 from tsp.localsearch import (
     local_search_steepest,
-    random_starting,
 )
 from tsp.localsearch.lazy import local_search_steepest_lazy
+from tsp.utils import random_starting
 
 
 @njit()

@@ -5,8 +5,9 @@ import numpy as np
 from numba import objmode
 
 from tsp import score
-from tsp.localsearch import local_search_steepest, random_starting
+from tsp.localsearch import local_search_steepest
 from tsp.solvers import solve_weighted_regret_greedy_cycle
+from tsp.utils import random_starting
 
 
 @numba.njit()

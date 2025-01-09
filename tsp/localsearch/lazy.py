@@ -4,11 +4,11 @@ import sys
 import numpy as np
 from numba import njit
 
-from tsp.localsearch import random_starting
 from tsp.localsearch.moves import (
     inter_node_exchange_delta,
     intra_edge_exchange_delta,
 )
+from tsp.utils import random_starting
 
 NULL = np.iinfo(np.int16).max
 

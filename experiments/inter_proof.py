@@ -1,6 +1,6 @@
 from tsp import TSP
-from tsp.localsearch import random_starting
 from tsp.localsearch.moves import inter_node_exchange, inter_node_exchange_delta
+from tsp.utils import random_starting
 
 if __name__ == "__main__":
     instance = TSP.from_csv("data/TSPA.csv")

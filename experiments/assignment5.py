@@ -1,19 +1,18 @@
 import csv
-from tsp import TSP, score
-from tsp.solvers import solve_greedy_cycle
-import typing
-from tsp.localsearch import (
-    local_search_greedy,
-    local_search_steepest,
-    local_search_steepest_candidate_edge,
-    random_starting,
-    random_starting_from_starting,
-)
 import time
-from tsp.localsearch.moves import IntraType
+import typing
+
 import numpy as np
 from numba import njit, objmode
 
+from tsp import TSP, score
+from tsp.localsearch import (
+    local_search_greedy,
+    local_search_steepest_candidate_edge,
+)
+from tsp.localsearch.moves import IntraType
+from tsp.solvers import solve_greedy_cycle
+from tsp.utils import random_starting_from_starting
 
 StartingMethod = typing.Literal["random"]
 LocalSearchMethod = typing.Literal["steepest"]

@@ -1,17 +1,15 @@
 import csv
-from tsp import TSP, score
-from tsp.solvers import solve_greedy_cycle
+import time
 import typing
+
+import numpy as np
+from numba import objmode
+
+from tsp import TSP, score
 from tsp.localsearch import (
     local_search_greedy,
-    local_search_steepest,
-    local_search_steepest_candidate_edge,
-    random_starting,
-    random_starting_from_starting,
 )
-import time
-import numpy as np
-from numba import njit, objmode
+from tsp.utils import random_starting_from_starting
 
 IntraType = typing.Literal["intra_edge"]
 StartingMethod = typing.Literal["random"]

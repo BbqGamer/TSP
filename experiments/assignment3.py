@@ -10,10 +10,10 @@ from tsp.localsearch import (
     LocalSearchMethod,
     local_search_greedy,
     local_search_steepest,
-    random_starting,
 )
 from tsp.localsearch.moves import IntraType
 from tsp.solvers import solve_greedy_cycle
+from tsp.utils import random_starting
 
 StartingMethod = typing.Literal["random", "heuristic"]
 
