@@ -175,7 +175,7 @@ class WeightedRegretGreedyCycle(Solver):
         )
 
 
-@njit()
+@njit(cache=True)
 def solve_weighted_regret_greedy_cycle(D, starting, solution_size):
     visited = np.zeros(len(D))
 

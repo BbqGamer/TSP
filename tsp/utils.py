@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 
 
-@njit()
+@njit(cache=True)
 def random_starting(
     n, sol_size, seed: int | None = 42
 ) -> tuple[np.ndarray, np.ndarray]:

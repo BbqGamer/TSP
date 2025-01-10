@@ -4,6 +4,7 @@ import numpy as np
 
 from tsp import score
 from tsp.localsearch import local_search_steepest
+from tsp.solvers import solve_weighted_regret_greedy_cycle
 from tsp.utils import random_starting
 
 
@@ -15,7 +16,7 @@ def operator_1(x1, x2):
     return np.array([])
 
 
-def operator_2(x1, x2):
+def operator_2(x1, x2, D, sol_size):
     """Recombination operator for TSP, takes 2 solutions and returns a single one
 
     We choose one of the parents as the starting solution. We remove from this
@@ -23,7 +24,29 @@ def operator_2(x1, x2):
     The solution is repaired using the weighted regret greedy cycle heuristic.
     We also test the version of the algorithm without local search after recombination
     (we still use local search for the initial population)."""
-    return np.array([])
+    edges_other = set()
+    for i in range(len(x2)):
+        edges_other.add((x2[i - 1], x2[i]))
+
+    base_nodes = set()
+    base = []
+    for i in range(len(x1)):
+        if (x1[i - 1], x1[i]) in edges_other:
+            left = x1[i - 1]
+            right = x1[i]
+            if left not in base_nodes:
+                base_nodes.add(left)
+                base.append(left)
+            if right not in base_nodes:
+                base_nodes.add(right)
+                base.append(right)
+
+    if not base:
+        base = [x1[0]]
+
+    repaired = solve_weighted_regret_greedy_cycle(D, base, sol_size)
+    assert len(set(repaired)) == sol_size
+    return repaired
 
 
 def solve_tsp_with_evolutionary(D, solution_size, timeout, popsize=20):
@@ -39,23 +62,26 @@ def solve_tsp_with_evolutionary(D, solution_size, timeout, popsize=20):
     - operator_2 - difference of nodes of sol1 and sol2 and repair using heuristic
     """
     # Generate an initial population X
-    X = [random_starting(len(D), solution_size)[0] for _ in range(popsize)]
-    S = [int(score(x, D)) for x in X]
+    X = [random_starting(len(D), solution_size, seed=i)[0] for i in range(popsize)]
+    S = [score(x, D) for x in X]
 
     end = time.perf_counter() + timeout
     while time.perf_counter() < end:
         # Draw at random two different solutions (parents) using uniform distribution
-        x1, x2 = X[np.random.choice(popsize, 2, replace=False)]
+        i1, i2 = np.random.choice(popsize, 2, replace=False)
+        x1 = X[i1]
+        x2 = X[i2]
 
         # Construct an offspring solution by recombining parents
-        if np.random.random() < 0.5:
-            y = operator_1(x1, x2)
-        else:
-            y = operator_2(x1, x2)
+        # if np.random.random() < 0.5:
+        #     y = operator_1(x1, x2)
+        # else:
+        y = operator_2(x1, x2, D, solution_size)
 
         # y := Local search (y)
         unselected = np.array([i for i in range(len(D)) if i not in y])
         y = local_search_steepest(y, unselected, D, "intra_edge")[0]
+        assert len(set(y)) == solution_size
 
         # if y is better than the worst solution in the population and has different score than any other solution
         s = int(score(y, D))
@@ -63,7 +89,21 @@ def solve_tsp_with_evolutionary(D, solution_size, timeout, popsize=20):
             continue
 
         # Add y to the population and remove the worst solution
-        worst_i = int(np.argmin(S))
+        worst_i = int(np.argmax(S))
         if s < S[worst_i]:
             X[worst_i] = y
             S[worst_i] = s
+
+        print(min(S))
+    return X[np.argmin(S)]
+
+
+if __name__ == "__main__":
+    import sys
+
+    from tsp import TSP
+
+    problem = TSP.from_csv(sys.argv[1])
+    sol = solve_tsp_with_evolutionary(problem.D, problem.solution_size, 12)
+
+    problem.visualize(sol)

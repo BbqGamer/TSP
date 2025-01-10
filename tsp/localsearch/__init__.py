@@ -1,4 +1,5 @@
 import time
+from functools import cache
 from typing import Literal
 
 import numpy as np
@@ -16,7 +17,7 @@ from tsp.localsearch.moves import perturb_sol
 LocalSearchMethod = Literal["steepest", "greedy"]
 
 
-@njit()
+@njit(cache=True)
 def local_search_steepest(
     sol, unselected, D, intra_move: IntraType
 ) -> tuple[np.ndarray, int, int]:
