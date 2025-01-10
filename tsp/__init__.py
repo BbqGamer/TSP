@@ -72,7 +72,7 @@ class TSP:
         return score(solution, self.D)
 
 
-@njit()
+@njit(cache=True)
 def score(solution: np.ndarray, D: np.ndarray):
     total_cost = 0
     for i in range(len(solution)):
