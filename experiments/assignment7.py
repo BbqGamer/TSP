@@ -13,7 +13,7 @@ def start_experiment(
 ):
     np.random.seed(42)
 
-    n_global_iters = 21
+    n_global_iters = 1
 
     scores = np.zeros(n_global_iters)
     times = np.zeros(n_global_iters)
@@ -22,9 +22,9 @@ def start_experiment(
     best_score = np.inf
 
     if instance_tsp == "TSPA":
-        time_limit = 1.927722
+        time_limit = 60  # 11.927722
     elif instance_tsp == "TSPB":
-        time_limit = 2.32237
+        time_limit = 60  # 2.32237
 
     for i in range(n_global_iters):
         print("Large scale neighborhood search iteration -", i)
@@ -47,6 +47,8 @@ def start_experiment(
         iters[i] = num_iters
         print(f"Score: {score}, Time: {times[i] * 1000} ms, Iterations: {num_iters}")
         print(len(sol))
+
+    print(best_sol)
 
     return scores, times, iters, best_sol
 

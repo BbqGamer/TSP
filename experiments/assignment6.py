@@ -94,9 +94,9 @@ def start_experiment(
             starting_sol, unselected = random_starting_from_starting(n, sol_size, i)
 
             if instance_tsp == "TSPA":
-                time_limit = 1.927722  # 2 * 200
+                time_limit = 0.10  # 1.927722  # 2 * 200
             elif instance_tsp == "TSPB":
-                time_limit = 2.32237  # 1 * 200
+                time_limit = 0.10  # 2.32237  # 1 * 200
 
             with objmode(end="f8"):
                 start = time.perf_counter()
@@ -121,6 +121,9 @@ def start_experiment(
             times[i] = end - start
             scores[i] = score(sol, D)
             iters[i] = inner_counter
+
+            print(f"BEST SOL {score(best_sol, D)}")
+            print(f"{best_sol}")
 
     return scores, times, iters, best_sol
 

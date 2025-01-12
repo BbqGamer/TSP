@@ -16,7 +16,7 @@ from numba import njit, objmode
 
 
 StartingMethod = typing.Literal["random"]
-LocalSearchMethod = typing.Literal["steepest"]
+LocalSearchMethod = typing.Literal["greedy"]
 
 
 @njit(cache=False)
@@ -30,6 +30,7 @@ def random_start_greedy_experiment(
 ):
     np.random.seed(42)
 
+    sols = []
     scores = []
     times = []
     iters = []
@@ -37,7 +38,7 @@ def random_start_greedy_experiment(
     closest_nodes = np.empty((200, n_neighbors), dtype=np.int64)
     for i in range(200):
         closest_nodes[i, :] = np.argsort(D[i])[:n_neighbors]
-    for i in range(200):
+    for i in range(1001):
         if starting == "random":
             start_sol, unselected = random_starting_from_starting(n, sol_size, i)
         else:
@@ -52,7 +53,9 @@ def random_start_greedy_experiment(
                 start_sol, unselected, D, closest_nodes
             )
         else:
+            print(f"Search! {i}")
             sol, num_iters = local_search_greedy(start_sol, unselected, D, intra_move)
+            sols.append(sol)
 
         with objmode(end="f8"):
             end = time.perf_counter()
@@ -60,7 +63,7 @@ def random_start_greedy_experiment(
         times.append(end - start)
         scores.append(score(sol, D))
         iters.append(num_iters)
-    return scores, times, iters
+    return sols, scores, times, iters
 
 
 if __name__ == "__main__":
@@ -76,7 +79,7 @@ if __name__ == "__main__":
                     for start_method in typing.get_args(StartingMethod):
                         method = intra_move + "_" + search_method + "_" + start_method
                         print(method)
-                        scores, times, iters = random_start_greedy_experiment(
+                        sols, scores, times, iters = random_start_greedy_experiment(
                             len(problem),
                             problem.solution_size,
                             problem.D,
@@ -90,3 +93,6 @@ if __name__ == "__main__":
                             writer.writerow(
                                 [prob, method, i, int(scores[i]), times[i], iters[i]]
                             )
+                        # write sols to npz
+                        sols = np.array(sols)
+                        np.savez(f"results/{prob}_{method}.npz", sols=sols)
