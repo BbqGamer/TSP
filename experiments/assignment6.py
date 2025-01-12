@@ -154,6 +154,7 @@ if __name__ == "__main__":
                             title=f"{prob} {method}",
                             outfilename=f"results/{prob}_{method}.png",
                         )
+                        print(best_sol)
 
                         print(f" - {sum(times) / len(times) * 1000} ms")
                         for i in range(len(scores)):
