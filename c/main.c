@@ -1,8 +1,40 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #define PROBLEM_SIZE 200
+#define SOLUTION_SIZE 100
+#define NODE uint8_t
+#define DIST int
+
+void random_starting_solution(NODE *solution) {
+    NODE nodes[PROBLEM_SIZE];
+    for (int i = 0; i < PROBLEM_SIZE; i++) {
+        nodes[i] = i;
+    }
+
+    for (int i = 0; i < PROBLEM_SIZE; i++) {
+        int j = rand() % PROBLEM_SIZE;
+        int tmp = nodes[i];
+        nodes[i] = nodes[j];
+        nodes[j] = tmp;
+    }
+
+    for(int i = 0; i < SOLUTION_SIZE; i++) {
+        solution[i] = nodes[i];
+    }
+}
+
+int score(NODE *solution, DIST *D) {
+    int score = 0;
+    for (int i = 0; i < SOLUTION_SIZE - 1; i++) {
+        score += D[solution[i] * PROBLEM_SIZE + solution[i + 1]];
+    }
+    score += D[solution[SOLUTION_SIZE - 1] * PROBLEM_SIZE + solution[0]];
+    return score;
+}
 
 int main(int argc, char *argv[]) {
     if (argc == 1) {
@@ -37,7 +69,7 @@ int main(int argc, char *argv[]) {
         printf("%d %d %d\n", points[i][0], points[i][1], weights[i]);
     }
 
-    int D[PROBLEM_SIZE * PROBLEM_SIZE];
+    DIST D[PROBLEM_SIZE * PROBLEM_SIZE];
     for (int i = 0; i < PROBLEM_SIZE; i++) {
         for (int j = 0; j < PROBLEM_SIZE; j++) {
             /* euclidian distance */
@@ -48,9 +80,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    for (int i = 0; i < 3; i ++) {
-        for (int j = 0; j < 3; j++) {
-            printf("%d ", D[i * PROBLEM_SIZE + j]);
-        }
+    NODE starting_solution[SOLUTION_SIZE];
+    random_starting_solution(starting_solution);
+
+    for (int i = 0; i < SOLUTION_SIZE; i++) {
+        printf("%d ", starting_solution[i]);
     }
+
+    printf("\n");
+    printf("%d", score(starting_solution, D));
 }
