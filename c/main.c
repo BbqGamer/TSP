@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <time.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
@@ -10,11 +11,16 @@
 #define PROBLEM_SIZE 200
 #define SOLUTION_SIZE 100
 #define PERTURB_NUM_AFFECTED 10
+#define NUM_THREADS 16
 #define UNSELECTED_SIZE (PROBLEM_SIZE - SOLUTION_SIZE)
 #define NUM_ITERATIONS 20
 #define NODE uint8_t
 #define DIST int
 #define SCORE int32_t
+
+DIST D[PROBLEM_SIZE * PROBLEM_SIZE];
+NODE solutions[NUM_THREADS][SOLUTION_SIZE]; 
+time_t start;
 
 int16_t mod(int16_t a, int16_t b)
 {
@@ -168,13 +174,15 @@ SCORE ILS(NODE* solution, DIST* D, float timelimit) {
     NODE unselected[UNSELECTED_SIZE];
     random_starting_solution(solution, unselected);
 
-    double cur = clock();
-    double end = cur + timelimit * CLOCKS_PER_SEC;
+    int i = 0;
     SCORE best_score = score(solution, D);
 
     NODE cursol[SOLUTION_SIZE];
     NODE curuns[UNSELECTED_SIZE];
-    while (cur < end) {
+
+    time_t curtime;
+    time(&curtime);
+    while (difftime(curtime, start) < timelimit) {
         memcpy(cursol, solution, SOLUTION_SIZE);
         memcpy(curuns, unselected, UNSELECTED_SIZE);
 
@@ -188,14 +196,48 @@ SCORE ILS(NODE* solution, DIST* D, float timelimit) {
             memcpy(unselected, curuns, UNSELECTED_SIZE);
         }
 
-        cur = clock();
+        if (i % 100 == 0) {
+            time(&curtime);
+        }
+        i += 1;
     }
 
     return best_score;
 }
 
+void *msilsrun(void *solptr) {
+    NODE* solution = (NODE*) solptr;
+    ILS(solution, D, 2.5);
+    return NULL;
+}
+
 SCORE MSILS(NODE* solution, DIST* D, float timelimit) {
-    return 0;
+    pthread_t threads[NUM_THREADS];
+    time(&start);
+    
+    int i;
+    for(i = 0 ; i < NUM_THREADS; i++) {
+        pthread_create(&threads[i], NULL, msilsrun, (void *)solutions[i]);
+    }
+
+    for(i = 0 ; i < NUM_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    SCORE cur_score, best_score = score(solutions[0], D);
+    memcpy(solution, solutions[0], SOLUTION_SIZE);
+    printf("thread results: ");
+    for(i = 1; i < NUM_THREADS; i++) {
+        cur_score = score(solutions[i], D);
+        printf("%d ", cur_score);
+        if (cur_score < best_score) {
+            best_score = cur_score;
+            memcpy(solution, solutions[i], SOLUTION_SIZE);
+        }
+    }
+    printf("\n");
+
+    return best_score;
 }
 
 int main(int argc, char *argv[]) {
@@ -228,7 +270,6 @@ int main(int argc, char *argv[]) {
         sscanf(line, "%d;%d;%d", &points[i][0], &points[i][1], &weights[i]);
     }
 
-    DIST D[PROBLEM_SIZE * PROBLEM_SIZE];
     for (i = 0; i < PROBLEM_SIZE; i++) {
         for (j = 0; j < PROBLEM_SIZE; j++) {
             /* euclidian distance */
@@ -242,7 +283,7 @@ int main(int argc, char *argv[]) {
     NODE solution[SOLUTION_SIZE];
 
     for(i = 0; i < NUM_ITERATIONS; i++) {
-        SCORE best_score = ILS(solution, D, 2.5);
+        SCORE best_score = MSILS(solution, D, 2.5);
 
         printf("%d\n", best_score);
         
