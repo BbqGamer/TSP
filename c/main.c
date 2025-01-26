@@ -19,6 +19,12 @@ int abs(int x) {
     return x < 0 ? -x : x;
 }
 
+int mod(int a, int b)
+{
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
+
 void random_starting_solution(NODE *solution, NODE *unselected) {
     NODE nodes[PROBLEM_SIZE];
     for (int i = 0; i < PROBLEM_SIZE; i++) {
@@ -26,7 +32,7 @@ void random_starting_solution(NODE *solution, NODE *unselected) {
     }
 
     for (int i = 0; i < PROBLEM_SIZE; i++) {
-        int j = rand() % PROBLEM_SIZE;
+        int j = mod(rand(), PROBLEM_SIZE);
         int tmp = nodes[i];
         nodes[i] = nodes[j];
         nodes[j] = tmp;
@@ -62,18 +68,18 @@ bool is_valid(NODE *solution) {
 }
 
 void intra_edge_exchange(NODE l, NODE r, NODE* solution) {
-  l = (l + 1) % SOLUTION_SIZE;
+  l = l + 1;
+  l %= SOLUTION_SIZE;
   while (l != r) {
     NODE tmp = solution[l];
     solution[l] = solution[r];
     solution[r] = tmp;
 
-    l = (l + 1) % SOLUTION_SIZE;
+    l = mod(l + 1, SOLUTION_SIZE);
     if (l == r) {
       break;
     }
-    r = (r - 1);
-    r %= SOLUTION_SIZE;
+    r = mod(r - 1, SOLUTION_SIZE);
   }
 }
 
@@ -98,8 +104,8 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
                 }
                 a = solution[i];
                 b = solution[j];
-                anext = solution[(i + 1) % SOLUTION_SIZE];
-                bnext = solution[(j + 1) % SOLUTION_SIZE];
+                anext = solution[mod(i + 1, SOLUTION_SIZE)];
+                bnext = solution[mod(j + 1, SOLUTION_SIZE)];
                 delta = D[bnext * PROBLEM_SIZE + anext] + D[a * PROBLEM_SIZE + b]
                       - D[a * PROBLEM_SIZE + anext] - D[bnext * PROBLEM_SIZE + b];
                 if (delta < best_delta) {
@@ -111,12 +117,12 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
             }
         }
 
-        /* inter-route edge exchange */
+        /* inter-route node exchange */
         for (int i = 0; i < SOLUTION_SIZE; i++) {
             for (int k = 0;  k < UNSELECTED_SIZE; k++) {
                 a = solution[i];
-                aprev = solution[(i - 1) % SOLUTION_SIZE];
-                anext = solution[(i + 1) % SOLUTION_SIZE];
+                aprev = solution[mod(i - 1, SOLUTION_SIZE)];
+                anext = solution[mod(i + 1, SOLUTION_SIZE)];
                 b = unselected[k];
                 delta = D[aprev * PROBLEM_SIZE + b] + D[b * PROBLEM_SIZE + anext]
                       - D[aprev * PROBLEM_SIZE + a] - D[a * PROBLEM_SIZE + anext];
@@ -140,6 +146,8 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
                 solution[bestl] = b;
                 unselected[bestr] = a;
             }
+
+            int real_score = score(solution, D);
         }
     }
     return best_score;
@@ -151,7 +159,7 @@ void perturb(NODE* solution) {
     NODE tmp;
     for(int i = 0; i < PERTURB_NUM_AFFECTED; i++) {
         l = start;
-        r = rand() % SOLUTION_SIZE;
+        r = mod(rand(), SOLUTION_SIZE);
 
         if (abs(l - r) < 2 || abs(l - r) > SOLUTION_SIZE - 2) {
             i -= 1;
@@ -175,8 +183,7 @@ int ILS(NODE* solution, NODE* unselected, DIST* D, float timelimit) {
 
         perturb(cursol);
 
-        int score_tofix = local_search(cursol, curuns, D);
-        int sol_score = score(cursol, D);
+        int sol_score = local_search(cursol, curuns, D);
 
         if (sol_score < best_score) {
             best_score = sol_score;
@@ -238,11 +245,15 @@ int main(int argc, char *argv[]) {
         int best_score = ILS(starting_solution, unselected, D, 2.5);
 
         printf("%d\n", best_score);
-    }
+        
+        char prefix[4] = {"sol"};
+        char filename[100];
+        sprintf(filename, "%s%d", prefix, iter);
 
-    FILE *output = fopen("bestsol", "w");
-    for (int i = 0; i < SOLUTION_SIZE; i++) {
-        fprintf(output, "%d\n", starting_solution[i]);
+        FILE *output = fopen(filename, "w");
+        for (int i = 0; i < SOLUTION_SIZE; i++) {
+            fprintf(output, "%d\n", starting_solution[i]);
+        }
+        fclose(output);
     }
-    fclose(output);
 }
