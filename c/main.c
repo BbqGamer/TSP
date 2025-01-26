@@ -14,42 +14,41 @@
 #define NUM_ITERATIONS 20
 #define NODE uint8_t
 #define DIST int
+#define SCORE int32_t
 
-int abs(int x) {
-    return x < 0 ? -x : x;
-}
-
-int mod(int a, int b)
+int16_t mod(int16_t a, int16_t b)
 {
-    int r = a % b;
+    int16_t r = a % b;
     return r < 0 ? r + b : r;
 }
 
 void random_starting_solution(NODE *solution, NODE *unselected) {
-    NODE nodes[PROBLEM_SIZE];
-    for (int i = 0; i < PROBLEM_SIZE; i++) {
+    NODE i, nodes[PROBLEM_SIZE];
+    
+    for (i = 0; i < PROBLEM_SIZE; i++) {
         nodes[i] = i;
     }
 
-    for (int i = 0; i < PROBLEM_SIZE; i++) {
+    for (i = 0; i < PROBLEM_SIZE; i++) {
         int j = mod(rand(), PROBLEM_SIZE);
         int tmp = nodes[i];
         nodes[i] = nodes[j];
         nodes[j] = tmp;
     }
 
-    for(int i = 0; i < SOLUTION_SIZE; i++) {
+    for(i = 0; i < SOLUTION_SIZE; i++) {
         solution[i] = nodes[i];
     }
 
-    for(int i = 0; i < UNSELECTED_SIZE; i++) {
+    for(i = 0; i < UNSELECTED_SIZE; i++) {
         unselected[i] = nodes[SOLUTION_SIZE + i];
     }
 }
 
-int score(NODE *solution, DIST *D) {
-    int score = 0;
-    for (int i = 0; i < SOLUTION_SIZE - 1; i++) {
+SCORE score(NODE *solution, DIST *D) {
+    SCORE score = 0;
+    NODE i;
+    for (NODE i = 0; i < SOLUTION_SIZE - 1; i++) {
         score += D[solution[i] * PROBLEM_SIZE + solution[i + 1]];
     }
     score += D[solution[SOLUTION_SIZE - 1] * PROBLEM_SIZE + solution[0]];
@@ -58,8 +57,9 @@ int score(NODE *solution, DIST *D) {
 
 bool is_valid(NODE *solution) {
     bool present[PROBLEM_SIZE];
+    NODE i;
     memset(present, false, sizeof(present));
-    for (int i = 0; i < SOLUTION_SIZE; i++) {
+    for (i = 0; i < SOLUTION_SIZE; i++) {
         if (present[solution[i]] || solution[i] < 0 || solution[i] >= PROBLEM_SIZE)
             return false;
         present[solution[i]] = true;
@@ -83,22 +83,18 @@ void intra_edge_exchange(NODE l, NODE r, NODE* solution) {
   }
 }
 
-
-int local_search(NODE* solution, NODE* unselected, DIST* D) {
-    int best_score = score(solution, D);
-    int improved = true;
-    int delta, best_delta;
-    bool intra_best;
-    NODE bestl, bestr;
-    NODE aprev, a, anext, b, bnext;
+SCORE local_search(NODE* solution, NODE* unselected, DIST* D) {
+    SCORE delta, best_delta, best_score = score(solution, D);
+    bool intra_best, improved = true;
+    NODE bestl, bestr, aprev, a, anext, b, bnext, i, j;
     NODE rolled_indices[SOLUTION_SIZE];
     while (improved) {
         improved = false;
         best_delta = 0;
 
         /* intra-route edge exchange */
-        for (int i = 0; i < SOLUTION_SIZE; i++) {
-            for (int j = 0; j < SOLUTION_SIZE; j++) {
+        for (i = 0; i < SOLUTION_SIZE; i++) {
+            for (j = 0; j < SOLUTION_SIZE; j++) {
                 if (abs(i - j) < 2 || abs(i - j) > SOLUTION_SIZE - 2) {
                     continue;
                 }
@@ -118,19 +114,19 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
         }
 
         /* inter-route node exchange */
-        for (int i = 0; i < SOLUTION_SIZE; i++) {
-            for (int k = 0;  k < UNSELECTED_SIZE; k++) {
+        for (i = 0; i < SOLUTION_SIZE; i++) {
+            for (j = 0;  j < UNSELECTED_SIZE; j++) {
                 a = solution[i];
                 aprev = solution[mod(i - 1, SOLUTION_SIZE)];
                 anext = solution[mod(i + 1, SOLUTION_SIZE)];
-                b = unselected[k];
+                b = unselected[j];
                 delta = D[aprev * PROBLEM_SIZE + b] + D[b * PROBLEM_SIZE + anext]
                       - D[aprev * PROBLEM_SIZE + a] - D[a * PROBLEM_SIZE + anext];
                 if (delta < best_delta) {
                     best_delta = delta;
                     intra_best = false;
                     bestl = i;
-                    bestr = k;
+                    bestr = j;
                 }
             }
         }
@@ -154,10 +150,8 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
 }
 
 void perturb(NODE* solution) {
-    uint8_t start = rand() % SOLUTION_SIZE;
-    uint8_t l, r;
-    NODE tmp;
-    for(int i = 0; i < PERTURB_NUM_AFFECTED; i++) {
+    NODE l, r, tmp, start = rand() % SOLUTION_SIZE;
+    for(uint8_t i = 0; i < PERTURB_NUM_AFFECTED; i++) {
         l = start;
         r = mod(rand(), SOLUTION_SIZE);
 
@@ -170,13 +164,13 @@ void perturb(NODE* solution) {
     }
 }
 
-int ILS(NODE* solution, DIST* D, float timelimit) {
+SCORE ILS(NODE* solution, DIST* D, float timelimit) {
     NODE unselected[UNSELECTED_SIZE];
     random_starting_solution(solution, unselected);
 
     double cur = clock();
     double end = cur + timelimit * CLOCKS_PER_SEC;
-    int best_score = score(solution, D);
+    SCORE best_score = score(solution, D);
 
     NODE cursol[SOLUTION_SIZE];
     NODE curuns[UNSELECTED_SIZE];
@@ -200,6 +194,10 @@ int ILS(NODE* solution, DIST* D, float timelimit) {
     return best_score;
 }
 
+SCORE MSILS(NODE* solution, DIST* D, float timelimit) {
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     if (argc == 1) {
         fprintf(stderr, "Usage %s <filename>\n", argv[0]);
@@ -216,7 +214,8 @@ int main(int argc, char *argv[]) {
     int weights[PROBLEM_SIZE];
 
     char line[128];
-    for (int i = 0; i < PROBLEM_SIZE; i++) {
+    NODE i, j;
+    for (i = 0; i < PROBLEM_SIZE; i++) {
         if (!fgets(line, sizeof(line), file)) {
             break;
         }
@@ -230,8 +229,8 @@ int main(int argc, char *argv[]) {
     }
 
     DIST D[PROBLEM_SIZE * PROBLEM_SIZE];
-    for (int i = 0; i < PROBLEM_SIZE; i++) {
-        for (int j = 0; j < PROBLEM_SIZE; j++) {
+    for (i = 0; i < PROBLEM_SIZE; i++) {
+        for (j = 0; j < PROBLEM_SIZE; j++) {
             /* euclidian distance */
             D[i * PROBLEM_SIZE + j] = floor(sqrt(
                 pow(points[i][0] - points[j][0], 2) +
@@ -242,14 +241,14 @@ int main(int argc, char *argv[]) {
 
     NODE solution[SOLUTION_SIZE];
 
-    for(int iter = 0; iter < NUM_ITERATIONS; iter++) {
-        int best_score = ILS(solution, D, 2.5);
+    for(i = 0; i < NUM_ITERATIONS; i++) {
+        SCORE best_score = ILS(solution, D, 2.5);
 
         printf("%d\n", best_score);
         
         char prefix[4] = {"sol"};
         char filename[100];
-        sprintf(filename, "%s%d", prefix, iter);
+        sprintf(filename, "%s%d", prefix, i);
 
         FILE *output = fopen(filename, "w");
         for (int i = 0; i < SOLUTION_SIZE; i++) {
