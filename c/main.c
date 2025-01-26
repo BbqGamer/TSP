@@ -170,7 +170,10 @@ void perturb(NODE* solution) {
     }
 }
 
-int ILS(NODE* solution, NODE* unselected, DIST* D, float timelimit) {
+int ILS(NODE* solution, DIST* D, float timelimit) {
+    NODE unselected[UNSELECTED_SIZE];
+    random_starting_solution(solution, unselected);
+
     double cur = clock();
     double end = cur + timelimit * CLOCKS_PER_SEC;
     int best_score = score(solution, D);
@@ -237,12 +240,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    NODE starting_solution[SOLUTION_SIZE];
-    NODE unselected[UNSELECTED_SIZE];
+    NODE solution[SOLUTION_SIZE];
 
     for(int iter = 0; iter < NUM_ITERATIONS; iter++) {
-        random_starting_solution(starting_solution, unselected);
-        int best_score = ILS(starting_solution, unselected, D, 2.5);
+        int best_score = ILS(solution, D, 2.5);
 
         printf("%d\n", best_score);
         
@@ -252,7 +253,7 @@ int main(int argc, char *argv[]) {
 
         FILE *output = fopen(filename, "w");
         for (int i = 0; i < SOLUTION_SIZE; i++) {
-            fprintf(output, "%d\n", starting_solution[i]);
+            fprintf(output, "%d\n", solution[i]);
         }
         fclose(output);
     }
