@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
@@ -8,7 +9,9 @@
 
 #define PROBLEM_SIZE 200
 #define SOLUTION_SIZE 100
+#define PERTURB_NUM_AFFECTED 10
 #define UNSELECTED_SIZE (PROBLEM_SIZE - SOLUTION_SIZE)
+#define NUM_ITERATIONS 20
 #define NODE uint8_t
 #define DIST int
 
@@ -56,6 +59,22 @@ bool is_valid(NODE *solution) {
         present[solution[i]] = true;
     }
     return true;
+}
+
+void intra_edge_exchange(NODE l, NODE r, NODE* solution) {
+  l = (l + 1) % SOLUTION_SIZE;
+  while (l != r) {
+    NODE tmp = solution[l];
+    solution[l] = solution[r];
+    solution[r] = tmp;
+
+    l = (l + 1) % SOLUTION_SIZE;
+    if (l == r) {
+      break;
+    }
+    r = (r - 1);
+    r %= SOLUTION_SIZE;
+  }
 }
 
 
@@ -113,19 +132,8 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
         if (best_delta < 0) {
             improved = true;
             best_score += best_delta;
-
             if (intra_best) {
-                bestl  = (bestl + 1) % SOLUTION_SIZE;
-                while (bestl != bestr) {
-                    NODE tmp = solution[bestl];
-                    solution[bestl] = solution[bestr];
-                    solution[bestr] = tmp;
-
-                    bestl = (bestl + 1) % SOLUTION_SIZE;
-                    if (bestl == bestr)
-                        break;
-                    bestr = (bestr - 1) % SOLUTION_SIZE;
-                }
+                intra_edge_exchange(bestl, bestr, solution);
             } else {
                 a = solution[bestl];
                 b = unselected[bestr];
@@ -134,6 +142,51 @@ int local_search(NODE* solution, NODE* unselected, DIST* D) {
             }
         }
     }
+    return best_score;
+}
+
+void perturb(NODE* solution) {
+    uint8_t start = rand() % SOLUTION_SIZE;
+    uint8_t l, r;
+    NODE tmp;
+    for(int i = 0; i < PERTURB_NUM_AFFECTED; i++) {
+        l = start;
+        r = rand() % SOLUTION_SIZE;
+
+        if (abs(l - r) < 2 || abs(l - r) > SOLUTION_SIZE - 2) {
+            i -= 1;
+            continue;
+        }
+
+        intra_edge_exchange(l, r, solution);
+    }
+}
+
+int ILS(NODE* solution, NODE* unselected, DIST* D, float timelimit) {
+    double cur = clock();
+    double end = cur + timelimit * CLOCKS_PER_SEC;
+    int best_score = score(solution, D);
+
+    NODE cursol[SOLUTION_SIZE];
+    NODE curuns[UNSELECTED_SIZE];
+    while (cur < end) {
+        memcpy(cursol, solution, SOLUTION_SIZE);
+        memcpy(curuns, unselected, UNSELECTED_SIZE);
+
+        perturb(cursol);
+
+        int score_tofix = local_search(cursol, curuns, D);
+        int sol_score = score(cursol, D);
+
+        if (sol_score < best_score) {
+            best_score = sol_score;
+            memcpy(solution, cursol, SOLUTION_SIZE);
+            memcpy(unselected, curuns, UNSELECTED_SIZE);
+        }
+
+        cur = clock();
+    }
+
     return best_score;
 }
 
@@ -166,10 +219,6 @@ int main(int argc, char *argv[]) {
         sscanf(line, "%d;%d;%d", &points[i][0], &points[i][1], &weights[i]);
     }
 
-    for (int i = 0; i < PROBLEM_SIZE; i++) {
-        printf("%d %d %d\n", points[i][0], points[i][1], weights[i]);
-    }
-
     DIST D[PROBLEM_SIZE * PROBLEM_SIZE];
     for (int i = 0; i < PROBLEM_SIZE; i++) {
         for (int j = 0; j < PROBLEM_SIZE; j++) {
@@ -183,23 +232,17 @@ int main(int argc, char *argv[]) {
 
     NODE starting_solution[SOLUTION_SIZE];
     NODE unselected[UNSELECTED_SIZE];
-    random_starting_solution(starting_solution, unselected);
 
+    for(int iter = 0; iter < NUM_ITERATIONS; iter++) {
+        random_starting_solution(starting_solution, unselected);
+        int best_score = ILS(starting_solution, unselected, D, 2.5);
+
+        printf("%d\n", best_score);
+    }
+
+    FILE *output = fopen("bestsol", "w");
     for (int i = 0; i < SOLUTION_SIZE; i++) {
-        printf("%d ", starting_solution[i]);
+        fprintf(output, "%d\n", starting_solution[i]);
     }
-
-    printf("\n");
-
-    for (int i = 0; i < UNSELECTED_SIZE; i++) {
-        printf("%d ", unselected[i]);
-    }
-
-    printf("\n");
-    printf("%d", score(starting_solution, D));
-
-    int sol = local_search(starting_solution, unselected, D);
-    printf("\n");
-    printf("%d\n", score(starting_solution, D));
-    printf("%d", sol);
+    fclose(output);
 }
